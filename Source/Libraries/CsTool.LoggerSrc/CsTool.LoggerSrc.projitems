@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>0d328ce9-244c-4b17-b056-aee758a3ab78</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>CsTool.LoggerSrc</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Extensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ILogBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\Log.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\LogPriority.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\LogBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\LogBaseProperties.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\LogMessage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\LogQueuedMessage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\QueuedMessage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LogUtilities.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)LICENCE.txt" />
+  </ItemGroup>
+</Project>

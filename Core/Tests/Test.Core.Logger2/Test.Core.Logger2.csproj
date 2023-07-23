@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IntermediateOutputPath>C:\ProgramData\VisualStudio\$(SolutionName)\$(MSBuildProjectName)\obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <Import Project="..\..\..\Source\Tests\Test.LoggerSrc\Test.LoggerSrc.projitems" Label="Shared" />
+
+  <Import Project="..\..\..\Source\Libraries\CsTool.LoggerSrc\CsTool.LoggerSrc.projitems" Label="Shared" />
+
+</Project>
