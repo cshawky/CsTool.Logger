@@ -15,7 +15,9 @@ CsTool.Logger will operate alongside NLog and Serilog but only if full namespace
 
 ## Version Information and Caveat
 
-CsTool.Logger.dll	Version 2.0.0 Beta Release
+CsTool.Logger.dll	Version 2.0.0 Beta
+
+Download binaries from https://github.com/cshawky/CsTool.Logger/releases/tag/V2.0.0-Beta.0
 
 The toolset DLL is labelled Version 2 as this project is a consolidation/simplification of earlier logging implementations (v1.x) to a form suitable for sharing and caring. This is the author's first sizeable project release to GitHub. The author only codes part time, more so as a hobby than anything else. Use in the work environment is limited, though an earlier synchronous release (v1) of this code has been included in critical realtime applications that have been operating 24x7 quite successfully for many years dating back to .NET 2.0. The asynchronous queueing was not present.
 
