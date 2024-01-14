@@ -88,9 +88,9 @@ namespace CsTool.Logger
         /// </summary>
         /// <param name="exception">The exception</param>
         /// <param name="rawmessage">Unformatted string</param>
-        public static void Write(Exception exception, string rawmessage)
+        public static void Write(Exception exception, string rawMessage)
         {
-            string message = ConstructExceptionMessage(exception, rawmessage);
+            string message = ConstructExceptionMessage(exception, rawMessage);
             WriteIt(message);
         }
 
@@ -100,7 +100,7 @@ namespace CsTool.Logger
         /// <param name="exception"></param>
         /// <param name="messageFormat"></param>
         /// <returns></returns>
-        public static string ConstructExceptionMessage(Exception exception, string rawmessage)
+        public static string ConstructExceptionMessage(Exception exception, string rawMessage)
         {
             string errorMessage = System.String.Empty;
             if (exception == null)
@@ -111,7 +111,7 @@ namespace CsTool.Logger
             try
             {
                 errorMessage = string.Concat(
-                                rawmessage,
+                                rawMessage,
                                 "\n**Exception: ", exception.Message,
                                 "\n  Line: ", exception.Source,
                                 "\n  StackTrace: ", exception.StackTrace);

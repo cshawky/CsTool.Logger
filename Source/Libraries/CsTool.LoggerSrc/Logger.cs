@@ -29,12 +29,12 @@ namespace CsTool.Logger
         /// Explicit static constructor for class <code>LoggerSingleton</code> to tell C# compiler
         /// not to mark type as beforefieldinit .
         /// 
-        /// Simplest Usage:
+        /// Simplest Usage, no initialisation necessary:
         /// 
         /// Logger.Write("Hello World");
         /// Logger.Write(LogPriority.Fatal,"Goodbye");
         /// 
-        /// Multiple Logger interface:
+        /// Multiple Logger interface. Each individual logger is created using new LogBase("LoggerName"):
         /// 
         /// LogBase logger1 = new LogBase("Logger1");
         /// LogBase logger2 = new LogBase("Logger2");
@@ -47,7 +47,7 @@ namespace CsTool.Logger
         }
 
         /// <summary>
-        /// Initialisation for class <code>LoggerSingleton</code>
+        /// Do not use me. Use new LogBase() instead: <code>LogBase logger1 = new LogBase("Logger1");</code>
         /// This initialiser is only public to allow override by LoggerWPF and should not be called directly.
         /// </summary>
         /// <remarks>
@@ -55,6 +55,7 @@ namespace CsTool.Logger
         /// </remarks>
         public Logger()
         {
+            throw new NotSupportedException("Do not use Logger class directly for instantiating individual loggers. Use class LogBase() instead.");
         }
 
         /// <summary>

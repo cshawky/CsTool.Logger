@@ -69,8 +69,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="View\ShowMessage.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="..\..\..\Source\Libraries\CsTool.LoggerSrc\CsTool.LoggerSrc.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>echo $(ProjectName) Post Build Steps
+SET DST=$(SolutionDir)SCADA Utilities\SCADA Utilities Installer\$(SolutionName)
+echo Updating "%25DST%25"
+MKDIR "%25DST%25" &gt;&gt; NUL
+XCOPY /Y /D /S /V /C /H "$(TargetDir)*.*" "%25DST%25"</PostBuildEvent>
+  </PropertyGroup>
 </Project>
