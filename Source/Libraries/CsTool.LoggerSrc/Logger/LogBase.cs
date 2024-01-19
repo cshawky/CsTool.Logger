@@ -292,9 +292,11 @@ namespace CsTool.Logger
         /// <remarks>File association works for NETFRAMEWORK but not CORE</remarks>
         public void DisplayLogFile()
         {
-            CloseAndFlush();
             try
             {
+                if (!File.Exists(FullLogFileName))
+                    Logger.Write(LogPriority.Info, "DisplayLogFile called before any logging has occurred");
+                CloseAndFlush();
                 Process.Start(FullLogFileName);
             }
             catch ( Exception exception ) {

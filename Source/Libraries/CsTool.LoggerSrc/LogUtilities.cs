@@ -194,7 +194,7 @@ namespace CsTool.Logger
                         throw new DirectoryNotFoundException("The application could not find a suitable log path to write to. Please ensure that the startup path, %TEMP% path or Desktop path are writeable");
                     }
                 }
-                path += @"\Logs\" + MyProcessName;
+                path += @"\" + MyProcessName;
                 //Log.Write("GetWriteablePath: Check path {0}", path);
                 if (IsPathReserved(path))
                 {
