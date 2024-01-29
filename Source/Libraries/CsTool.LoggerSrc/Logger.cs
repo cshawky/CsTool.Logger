@@ -147,9 +147,16 @@ namespace CsTool.Logger
         public static void Write(LogEventLevel level, Exception exception, string messageTemplate) => Instance.Write((LogPriority)level, exception, messageTemplate);
 
         //
+        // CsTool.Logger interfaces for easy exception logging.
+        // Compatible with older/legacy CsTool.CoreUtilities.MyLogger Interfaces
+        //
+        public static void LogExceptionMessage(Exception exception) => Instance.Write(LogPriority.ErrorProcessing, exception, "Exception");
+        public static void LogExceptionMessage(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
+
+        //
         // CsTool.Logger interfaces compatible with older/legacy CsTool.CoreUtilities.MyLogger Interfaces
         //
-        public static void LogExceptionMessage(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
+
         public static void LogMessage(string messageFormat, params object[] args) => Instance.Write(LogPriority.Info, messageFormat, args);
 
         public static void LogMessage(LogPriority logPriority, string simpleMessage) => Instance.Write(logPriority, simpleMessage);
