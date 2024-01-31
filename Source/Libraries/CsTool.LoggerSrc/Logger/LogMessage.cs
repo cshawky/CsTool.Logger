@@ -192,6 +192,17 @@ namespace CsTool.Logger
         /// <param name="exception">The Exception raised</param>
         /// <param name="messageFormat">Formatted message string</param>
         /// <param name="args">Optional formatted string arguments</param>
+        public virtual void Write(Exception exception)
+        {
+            Write(LogPriority.Fatal, exception, "" );
+        }
+
+        /// <summary>
+        /// Log the exception message with priority Fatal.
+        /// </summary>
+        /// <param name="exception">The Exception raised</param>
+        /// <param name="messageFormat">Formatted message string</param>
+        /// <param name="args">Optional formatted string arguments</param>
         public virtual void Write(Exception exception, string messageFormat, params object[] args)
         {
             Write(LogPriority.Fatal, exception, messageFormat, args);

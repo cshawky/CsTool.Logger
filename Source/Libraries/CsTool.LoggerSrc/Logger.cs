@@ -127,7 +127,9 @@ namespace CsTool.Logger
         public static void Write(Exception exception, string messageTemplate) => Instance.Write(LogPriority.Fatal, exception, messageTemplate);
         public static void Write(LogPriority level, string messageTemplate) => Instance.Write(level, messageTemplate);
         public static void Write(LogPriority level, string messageTemplate, params object[] propertyValues) => Instance.Write(level, messageTemplate, propertyValues);
+        public static void Write(Exception exception) => Instance.Write(exception);
         public static void Write(LogPriority level, Exception exception, string messageTemplate) => Instance.Write(level, exception, messageTemplate);
+        public static void Write(LogPriority level, Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(level, exception, messageTemplate, propertyValues);
         public static void Write(LogPriority logPriority, string messageFormat, NameValueCollection parameters) => Instance.Write(logPriority, messageFormat, parameters);
         public static void WriteRaw(LogPriority logPriority, string rawMessage, params object[] args) => Instance.WriteRaw(logPriority, rawMessage, args);
 
@@ -140,8 +142,8 @@ namespace CsTool.Logger
         public static void Debug(string messageTemplate, params object[] propertyValues) => Instance.Write(LogEventLevel.Debug, messageTemplate, propertyValues);
 
         //
-        // Basic Serilog equivalent interfaces (some) to assist if migrating to/from Serilog
-        //
+        // Basic Serilog equivalent interfaces (some) to assist if migrating to/from Serilog.
+        // Only methods using LogEventLevel as the priority are supported by Sirilog.
         public static void Write(LogEventLevel level, string messageTemplate) => Instance.Write(level, messageTemplate, null);
         public static void Write(LogEventLevel level, string messageTemplate, params object[] propertyValues) => Instance.Write(level, messageTemplate, propertyValues);
         public static void Write(LogEventLevel level, Exception exception, string messageTemplate) => Instance.Write((LogPriority)level, exception, messageTemplate);
@@ -150,6 +152,7 @@ namespace CsTool.Logger
         // CsTool.Logger interfaces for easy exception logging.
         // Compatible with older/legacy CsTool.CoreUtilities.MyLogger Interfaces
         //
+        // Exceptions may also be processed using Logger.Write(exception,...
         public static void LogExceptionMessage(Exception exception) => Instance.Write(LogPriority.ErrorProcessing, exception, "Exception");
         public static void LogExceptionMessage(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
 
