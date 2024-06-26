@@ -73,7 +73,7 @@ namespace CsTool.Logger
         /// Decremented each time the request is cancelled (restore).
         /// </summary>
         /// <remarks>This property is available through any ViewModel that inherits <code>OnPropertyChangedViewModel</code></remarks>
-        internal int ShowMessagesDisabledCount { get; private set; }
+        public int ShowMessagesDisabledCount { get; private set; }
 
         private Object disableShowMessagesLock = new Object();
 

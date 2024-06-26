@@ -18,7 +18,7 @@ namespace CsTool.Logger
     /// The underlying logger <code>LogBase</code> may be instantiated multiple times
     /// for independent logging streams.
     /// </summary>
-    public class Logger
+    public partial class Logger
     {
         //
         // -----------------------------------------------------------------------------------------
@@ -124,14 +124,15 @@ namespace CsTool.Logger
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
         public static void Write(string messageTemplate) => Instance.Write(LogPriority.Info, messageTemplate);
         public static void Write(string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Info, messageTemplate, propertyValues);
-        public static void Write(Exception exception, string messageTemplate) => Instance.Write(LogPriority.Fatal, exception, messageTemplate);
         public static void Write(LogPriority level, string messageTemplate) => Instance.Write(level, messageTemplate);
         public static void Write(LogPriority level, string messageTemplate, params object[] propertyValues) => Instance.Write(level, messageTemplate, propertyValues);
-        public static void Write(Exception exception) => Instance.Write(exception);
-        public static void Write(LogPriority level, Exception exception, string messageTemplate) => Instance.Write(level, exception, messageTemplate);
-        public static void Write(LogPriority level, Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(level, exception, messageTemplate, propertyValues);
         public static void Write(LogPriority logPriority, string messageFormat, NameValueCollection parameters) => Instance.Write(logPriority, messageFormat, parameters);
         public static void WriteRaw(LogPriority logPriority, string rawMessage, params object[] args) => Instance.WriteRaw(logPriority, rawMessage, args);
+        public static void Write(Exception exception) => Instance.Write(exception);
+        public static void Write(Exception exception, string messageTemplate) => Instance.Write(LogPriority.Fatal, exception, messageTemplate);
+        public static void Write(Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Fatal, exception, messageTemplate, propertyValues);
+        public static void Write(LogPriority level, Exception exception, string messageTemplate) => Instance.Write(level, exception, messageTemplate);
+        public static void Write(LogPriority level, Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(level, exception, messageTemplate, propertyValues);
 
         //
         // A few NLog log compatible method names
@@ -155,6 +156,14 @@ namespace CsTool.Logger
         // Exceptions may also be processed using Logger.Write(exception,...
         public static void LogExceptionMessage(Exception exception) => Instance.Write(LogPriority.ErrorProcessing, exception, "Exception");
         public static void LogExceptionMessage(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
+
+        //
+        // GitHub Copilot liked this format but it might have been guessing
+        //
+        public static void LogException(Exception exception) => Instance.Write(LogPriority.ErrorProcessing, exception, "Exception");
+        public static void LogException(Exception exception, string messageTemplate) => Instance.Write(LogPriority.Fatal, exception, messageTemplate);
+        public static void LogException(Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Fatal, exception, messageTemplate, propertyValues);
+        public static void LogException(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
 
         //
         // CsTool.Logger interfaces compatible with older/legacy CsTool.CoreUtilities.MyLogger Interfaces
