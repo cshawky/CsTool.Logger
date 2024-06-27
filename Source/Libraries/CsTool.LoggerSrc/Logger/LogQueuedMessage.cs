@@ -75,7 +75,8 @@ namespace CsTool.Logger
                         string message;
                         if (p.LDate > DateTimeOffset.MinValue)
                         {
-#if DEBUG
+#if DEBUGLOGGER
+                            // The log includes the time of the log message and the time the message is logged
                             message = string.Format("{0:HH:mm:ss.fff}:{1:HH:mm:ss.fff}:{2}: {3}: {4}", 
                                 p.LDate, date, p.ThreadId.ToString().PadLeft(3, ' '), p.LPriority, p.Msg);
 #else
