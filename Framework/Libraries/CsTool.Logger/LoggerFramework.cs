@@ -17,7 +17,22 @@ namespace CsTool.Logger
         // Legacy CsTool.CoreUtilities interfaces using Windows Forms dialogue boxes.
         //
         public static void ShowMessage(string simpleMessage, string title) => Instance.ShowMessage(simpleMessage, title);
+        public static void ShowMessage(string simpleMessage, string title, bool doNotLogMessage) => Instance.ShowMessage(simpleMessage, title, doNotLogMessage);
         public static void ShowExceptionMessage(LogPriority logPriority, Exception exception, string progressMessage) => Instance.ShowExceptionMessage(logPriority, exception, progressMessage);
+
+        public static bool ShowConfirmationMessage(string message, string title, bool doNotLogMessage) => Instance.ShowConfirmationMessage(message, title, doNotLogMessage);
+
+        public static bool IsShowMessagesEnabled => Instance.IsShowMessagesEnabled;
+
+        public static bool IsShowMessagesEnabledByDefault => Instance.IsShowMessagesEnabledByDefault;
+
+        public static int ShowMessagesDisabledCount => Instance.ShowMessagesDisabledCount;
+
+        public static void DisableShowMessages() => Instance.DisableShowMessages();
+
+        public static void EnableShowMessages() => Instance.RestoreShowMessages();
+
+        public static void RestoreShowMessages() => Instance.RestoreShowMessages();
 
     }
 }

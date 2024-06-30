@@ -68,7 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Logger.cs" />
+    <Compile Include="LoggerFramework.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="View\ShowMessage.cs" />
   </ItemGroup>

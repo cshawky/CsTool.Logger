@@ -120,9 +120,9 @@ namespace CsTool.Logger
         /// </summary>
         /// <param name="message"></param>
         /// <param name="title"></param>
-        /// <param name="dontLogMessage"></param>
+        /// <param name="doNotLogMessage"></param>
         /// <returns>True = "Yes", False = "No"</returns>
-        public bool ShowConfirmationMessage(string message, string title, bool dontLogMessage)
+        public bool ShowConfirmationMessage(string message, string title, bool doNotLogMessage)
         {
             // Show the message in a dialogue box
             bool result = false;
@@ -142,7 +142,7 @@ namespace CsTool.Logger
             }
 
             // By default all dialogue box messages are logged
-            if (dontLogMessage == false)
+            if (doNotLogMessage == false)
             {
                 // Log the message
                 string logMessage = "User Confirmation Message: " + title + " : " + message
@@ -205,11 +205,11 @@ namespace CsTool.Logger
         /// </summary>
         /// <param name="message"></param>
         /// <param name="title"></param>
-        /// <param name="dontLogMessage"></param>
-        public void ShowMessage(string message, string title, bool dontLogMessage)
+        /// <param name="doNotLogMessage"></param>
+        public void ShowMessage(string message, string title, bool doNotLogMessage)
         {
             // By default all dialogue box messages are logged
-            if (!dontLogMessage || !IsShowMessagesEnabled)
+            if (!doNotLogMessage || !IsShowMessagesEnabled)
             {
                 // Log the message
                 string logMessage = "User Message: " + title + " : " + message;
