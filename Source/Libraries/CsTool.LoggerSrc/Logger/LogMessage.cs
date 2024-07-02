@@ -242,8 +242,8 @@ namespace CsTool.Logger
 
         /// <summary>
         /// Logs a message without any additional formatting or data. The raw message is appending with
-        /// a line feed/carriage return, but no date/time or priority is printed in the log
-        /// The entire message is indented
+        /// a line feed/carriage return, but no date/time or priority is printed in the log.
+        /// The entire message is indented.
         /// </summary>
         /// <param name="logPriority"></param>
         /// <param name="rawmessage"></param>

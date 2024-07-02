@@ -90,6 +90,11 @@ This is the source code for the logger class.
 ### Tests\Test.LoggerSrc
 This is the example Test application source code. Shared source is used to ensure that at all times the implementation supports both Core and Framework .NET implementations. The test applications provided use the same test source code but demonstrate different ways of linking or including the logger class.
 
+# NuGet
+This is on the TODO list. I am getting ready to update the project for multiple frameworks before creating my first NuGet package. Any assistance would be welcome.
+At present I have a CsTool.Core.Logger implementation and CsTool.Logger for Framework. That latter has a few simple Windows.Forms add ons for messaging. Simple to #define out
+or incorporate into a separate package. Other than that it should be fine for Core and Framework, all code existing in a shared source project barring the ShowMessage()...
+
 # Usage
 
 The critical code components for utilising CsTool.Logger are:
@@ -265,3 +270,8 @@ CsTool.Logger as it stands
 	Jan 2024
 		Restored some old Windows Forms dialogue box support to allow old projects to utilise the latest library. The CsTool.Wpf project is not ready for release as a full Wpf replacement to any forms interfaces.
 		Added an exception if a new logger is initialised incorrectly. i.e. Do not do: Logger myLogger2 = new Logger("Logger2"); Instead use LogBase myLogger2 = new LogBase("Logger2");
+	Jul 2024
+		Registered on NuGet, looking into packaging, but would like to make this multi framework supportable in the build.
+		It looks like some of the Logger tuning parameters have not been exposed properly so you may not be able to change the log priority. This will be fixed soon.
+		I've been using this release extensively in a multi threading app including SuperSimpleTcp and it works great. Log messages from SuperSimpleTcp, my app and all
+		of the MVVM threads blending nicely with no delay to the app, even when I got timeouts wrong (zero instead of seconds) with extensive logging.

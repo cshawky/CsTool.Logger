@@ -10,7 +10,7 @@
     <Company>SHAWKY Electronics</Company>
     <Authors>CShawky</Authors>
     <Copyright>Copyright © Shawky 2016 - 2024 and distributable under MIT License</Copyright>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLicenseFile>..\..\..\LICENSE</PackageLicenseFile>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
