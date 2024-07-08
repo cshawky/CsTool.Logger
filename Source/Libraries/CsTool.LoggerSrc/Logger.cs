@@ -104,6 +104,11 @@ namespace CsTool.Logger
 
         public static uint CountOldLogFilesToKeep { get => Instance.CountOldLogFilesToKeep; set => Instance.CountOldLogFilesToKeep = value; }
 
+        /// <summary>
+        /// The threshold debug priority that will enable log messages to be written.
+        /// The lower the integer value of DebugThresholdDefault, the fewer debug messages will be displayed.
+        /// Setting the LogThresholdMaxLevel to LogPriority.Never (a very big number) will disable all logging.
+        /// </summary>
         public static DebugThresholdLevel LogThresholdMaxLevel { get => Instance.LogThresholdMaxLevel; set => Instance.LogThresholdMaxLevel = value; }
 
         #endregion Tuneable Properties
@@ -117,12 +122,14 @@ namespace CsTool.Logger
         //
         // These methods are the latest implementations: Refer to class iLogBase for minimum interfaces.
         //
+        public static void Close() => Instance.CloseAndFlush();
         public static void CloseAndFlush() => Instance.CloseAndFlush();
         public static string ConstructExceptionMessage(Exception exception, string simpleMessage) => Instance.ConstructExceptionMessage(exception, simpleMessage);
         public static void DisplayLogFile() => Instance.DisplayLogFile();
         public static bool IsLogPriorityEnabled(LogPriority priority) => Instance.IsLogPriorityEnabled(priority);
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
+
         public static void Write(string messageTemplate) => Instance.Write(LogPriority.Info, messageTemplate);
         public static void Write(string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Info, messageTemplate, propertyValues);
         public static void Write(LogPriority level, string messageTemplate) => Instance.Write(level, messageTemplate);

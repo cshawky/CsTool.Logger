@@ -408,26 +408,29 @@ namespace CsTool.Logger
         /// Use of IsPathReserved(path) also confirms that the path is writeable so that the
         /// sub folder <code>Logs<code> may be created.
         /// </remarks>
-        private void SetLogDirectory()
+        public void SetLogDirectory(string preferredPath = null)
         {
             string basePath;
-            string path = @"C:\ProgramData";
+            if (preferredPath.IsNullOrWhiteSpace())
+            {
+                preferredPath = LogUtilities.MyStartupPath;
+            }
             try
             {
-                basePath = LogUtilities.GetWriteablePath();
-                path = basePath + @"\Logs";
-                if (!Directory.Exists(path))
+                basePath = LogUtilities.GetWriteablePath(preferredPath);
+                preferredPath = basePath + @"\Logs";
+                if (!Directory.Exists(preferredPath))
                 {
-                    Directory.CreateDirectory(path);
+                    Directory.CreateDirectory(preferredPath);
                 }
             }
             catch (Exception exception)
             {
-                Log.Write(exception, "SetLogDirectory: Fundamental path issue");
+                Log.Write(exception, "SetLogDirectory: Fundamental path issue: " + preferredPath);
             }
             finally
             {
-                LogFilePath = path;
+                LogFilePath = preferredPath;
             }
         }
 

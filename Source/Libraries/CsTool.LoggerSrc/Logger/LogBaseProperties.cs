@@ -97,8 +97,7 @@ namespace CsTool.Logger
         /// <summary>
         /// The threshold debug priority that will enable log messages to be written.
         /// The lower the integer value of DebugThresholdDefault, the fewer debug messages will be displayed.
-        ///
-        /// Setting the BebugThreshold to LogPriority.Never (a very big number) will disable all logging.
+        /// Setting the LogThresholdMaxLevel to LogPriority.Never (a very big number) will disable all logging.
         /// </summary>
         /// <remarks >
         /// The supported debug levels are defined in class DebugThresholdLevel. To change the debug level
