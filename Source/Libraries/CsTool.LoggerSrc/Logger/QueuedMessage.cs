@@ -30,7 +30,7 @@ namespace CsTool.Logger
         //
         #region Properties
 
-        internal LogPriority LPriority { get; set; }            // Priority of log
+        internal LogPriority LPriority { get; set; }            // Priority of log message
         internal string Msg { get; set; }                       // Message
         internal object[] Args { get; set; }                    // Message string arguments
         internal DateTimeOffset LDate { get; set; }             // The date/time of the message

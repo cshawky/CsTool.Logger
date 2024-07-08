@@ -6,7 +6,6 @@
 // </copyright>
 // -------------------------------------------------------------------------------------------------------------------------
 
-
 namespace CsTool.Logger
 {
     using CsTool.Extensions;
@@ -30,7 +29,7 @@ namespace CsTool.Logger
     /// The Logger interface utilises a Producer/Consumer pattern based on the BlockedCollection to
     /// provide full thread safe logging. 
     /// 
-    /// Programatically, user code creates a Log Message. Minimal processing is done on the message
+    /// Programmatically, user code creates a Log Message. Minimal processing is done on the message
     /// using the ILogger interface methods. The LogMessage <code>QueuedLogMessage</code> is then
     /// placed on the FIFO queue. The queue is then serviced by a single consumer per logger instance.
     /// 
@@ -67,7 +66,7 @@ namespace CsTool.Logger
     /// </code>
     /// 
     /// Additional independent logging streams may be created in your application simply by making a new instance
-    /// of BaseLogger and changing the FilePrend text before using the logger instance.
+    /// of BaseLogger and changing the FilePrepend text before using the logger instance.
     /// 
     /// Thanks to: https://stackoverflow.com/questions/2954900/simple-multithread-safe-log-class
     /// </summary>
@@ -79,17 +78,17 @@ namespace CsTool.Logger
         #region Initialisation
 
         /// <summary>
-        /// Thread safe lock object for all parameters
+        /// Thread safe lock object for all parameters being updated by the logger.
         /// </summary>
         private static readonly object padLockProperties = new object();
 
         /// <summary>
-        /// Thread safe lock object for all parameters
+        /// Thread safe lock object for all messages being logged.
         /// </summary>
         private static readonly object padLockLogMessage = new object();
 
         /// <summary>
-        /// Initialise DebugLog class. If no filename is provided full initialisation is deferred.
+        /// Initialise class. If no filename is provided full initialisation is deferred.
         /// </summary>
         /// <param name="newFilePrependText">The text string to append the date to in order to create a valid file name.
         /// If date stamping is disabled this is the file name excluding extension.</param>
@@ -167,12 +166,15 @@ namespace CsTool.Logger
         {
             isShutDownActive = true;
             isLogFileFirstOpen = false;
-            if ( disposed )
+            if (disposed)
             {
-                if (timer != null)
-                    timer.Dispose();
                 if (bc != null)
                 {
+                    // Give time for the existing queue to be processed including any last minute logs from class destructors.
+                    // Catching this is not guaranteed.
+                    // NOTE: Reduce this time if "Logging stopped" is not completed in the log file.
+                    //Thread.Sleep(100);
+
                     // Get rid of managed resources
                     // Prevent new log messages from being added
                     bc.CompleteAdding();
@@ -181,8 +183,6 @@ namespace CsTool.Logger
                     {
                         LogQueuedMessage(p);
                     }
-                    bc.Dispose();
-                    bc = null;
                 }
                 if (!IsStreamWriteable())
                     CreateNewLogFile();
@@ -190,15 +190,21 @@ namespace CsTool.Logger
                     "\n============================== Logging stopped : {0:yyyy-MMM-dd ddd HH:mm:ss} : Shutdown requested =====================",
                     DateTimeOffset.Now);
                 CloseAndFlush();
-            }
+                if (timer != null)
+                    timer.Dispose();
+                if (bc != null)
+                {
+                    bc.Dispose();
+                    bc = null;
+                }
 
-            // get rid of unmanaged resources - nothing to do
+            }
         }
 
         private Object padLockShutdown = new Object();
 
         private System.Timers.Timer timer;
-        private UInt64 timerLastCount;
+        private UInt64 TimerLastCount;
         private bool IsSyncDue { get; set; }
 
 
@@ -212,9 +218,9 @@ namespace CsTool.Logger
         {
             UInt64 thisCount = CountLoggedMessagesTotal;
             //Logger.Write($"OnTimedEvent({e.SignalTime:HH:mm:ss.fff}) {CountLoggedMessages}");
-            if (timerLastCount != thisCount)
+            if (TimerLastCount != thisCount)
             {
-                timerLastCount = thisCount;
+                TimerLastCount = thisCount;
                 if (streamWriter != null && !IsSyncDue)
                 {
                     IsSyncDue = true;
@@ -236,6 +242,7 @@ namespace CsTool.Logger
         /// <summary>
         /// Wait for queued messages and process them until the queue is finalised
         /// </summary>
+        /// <remarks>TODO Consider using a Token to work with Dispose(), no problems observed as is.</remarks>
         private void ConsumeMessages()
         {
             var task = Task.Factory.StartNew(() =>

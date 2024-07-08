@@ -97,7 +97,7 @@ namespace CsTool.Logger
                             streamWriter.Flush();
                             IsSyncDue = false;
                         }
-                        IncrementMessageCount();
+                        IncrementMessageCount(p.LPriority);
                     }
                     catch (Exception exception)
                     {
@@ -122,7 +122,7 @@ namespace CsTool.Logger
                     if (streamWriter != null)
                     {
                         streamWriter.Flush();
-                        timerLastCount = countLoggedMessagesTotal;
+                        TimerLastCount = countLoggedMessagesTotal;
                     }
                     break;
 
@@ -165,19 +165,20 @@ namespace CsTool.Logger
         }
 
         /// <summary>
-        /// Increment both message log counters
+        /// Increment message log counters
         /// </summary>
-        public void IncrementMessageCount()
+        public void IncrementMessageCount(LogPriority logPriority)
         {
-            lock (padLockProperties)
+            CountLoggedMessages++;
+            CountLoggedMessagesTotal++;
+            if (countLoggedMessages > CountLoggedMessagesMaximum)
             {
-                countLoggedMessages++;
-                countLoggedMessagesTotal++;
-                if (countLoggedMessages > CountLoggedMessagesMaximum)
-                {
-                    BackupLogFiles();
-                    countLoggedMessages = 0;
-                }
+                BackupLogFiles();
+                CountLoggedMessages = 0;
+            }
+            if ((int)logPriority > 0 && (int)logPriority <= (int)LogPriority.ErrorProcessing)
+            {
+                CountLoggedErrors++;
             }
         }
 

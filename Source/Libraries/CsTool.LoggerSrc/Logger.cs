@@ -83,6 +83,7 @@ namespace CsTool.Logger
         public static uint CountLoggedMessages { get => Instance.CountLoggedMessages; }
         public static ulong CountLoggedMessagesTotal { get => Instance.CountLoggedMessagesTotal; }
         public static ulong CountLostMessagesTotal { get => Instance.CountLostMessagesTotal; }
+        public static uint CountLoggedErrors { get => Instance.CountLoggedErrors; }
         public static int LogQueueCount { get => Instance.LogQueueCount; }
 
         #endregion Read only Properties

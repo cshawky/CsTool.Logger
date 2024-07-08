@@ -10,8 +10,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("SHAWKY Electronics")]
 [assembly: AssemblyProduct("CsTool.Logger")]
-[assembly: AssemblyCopyright("Copyright ©  Shawky 2016 - 2020 and Client Use Rights")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("Copyright ©  Shawky 2016 - 2024 and Client Use Rights")]
+[assembly: AssemblyTrademark("https://github.com/cshawky")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible

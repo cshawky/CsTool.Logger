@@ -194,7 +194,27 @@ namespace CsTool.Logger
         /// Backend field for <code>CountLoggedMessages</code> property.
         /// </summary>
         private uint countLoggedMessages;
+
+        /// <summary>
+        /// Backend field for <code>CountLoggedErrors</code> property.
+        /// </summary>
+        private uint countLoggedErrors;
+
+        /// <summary>
+        /// Lock for the countLoggedMessages
+        /// </summary>
+        private static readonly object padLockCountLoggedErrors = new object();
+
+
+        /// <summary>
+        /// Lock for the countLoggedMessages
+        /// </summary>
         private static readonly object padLockCountLoggedMessages = new object();
+
+        /// <summary>
+        /// Lock for the countLoggedMessagesTotal
+        /// </summary>
+        private static readonly object padLockCountLoggedMessagesTotal = new object();
 
         /// <summary>
         /// Backend field for <code>CountLoggedMessagesTotal</code> property.
@@ -261,6 +281,7 @@ namespace CsTool.Logger
             {
                 lock (padLockCountLoggedMessages)
                 {
+                    // don't check if value has changed, just update it
                     countLoggedMessages = value;
                     if (value > CountLoggedMessagesMaximum)
                     {
@@ -272,19 +293,41 @@ namespace CsTool.Logger
         }
 
         /// <summary>
+        /// A count of the number of messages logged to the current open file.
+        /// </summary>
+        public uint CountLoggedErrors
+        {
+            get => this.countLoggedErrors;
+            private set
+            {
+                lock (padLockCountLoggedErrors)
+                {
+                    countLoggedErrors = value;
+                }
+            }
+        }
+
+        /// <summary>
         /// A count of the total number of messages processed by this logger.
         /// </summary>
-        public ulong CountLoggedMessagesTotal { get => countLoggedMessagesTotal; }
+        public ulong CountLoggedMessagesTotal 
+        { 
+            get => countLoggedMessagesTotal;
+            private set
+            {
+                lock (padLockCountLoggedMessagesTotal)
+                {
+                    countLoggedMessagesTotal = value;
+                }
+            }
+        }
 
         /// <summary>
         /// A count of the total number of messages that could not be queued.
         /// </summary>
         public ulong CountLostMessagesTotal 
         {
-            get
-            {
-                return countLostMessagesTotal;
-            }
+            get => countLostMessagesTotal;
             private set
             {
                 lock (padLockCountLostMessagesTotal)
