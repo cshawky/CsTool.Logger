@@ -13,15 +13,17 @@ Performance testing was conducted against NLog and Serilog but those test projec
 
 CsTool.Logger will operate alongside NLog and Serilog but only if full namespaces are used to differentiate between "Logger" classes. CsTool.Logger supports multiple logging streams.
 
-## Version Information and Caveat
+## Version Information and Caveats
 
-CsTool.Logger.dll	Version 2.0.0 Beta
+CsTool.Logger.dll	Version 2.0.0 Beta (Stable)
 
 Download binaries from https://github.com/cshawky/CsTool.Logger/releases/tag/V2.0.0-Beta.0
 
+The latest release is currently only available by downloading the project and compiling it. NuGet packaging is on the list of things to do.
+
 The toolset DLL is labelled Version 2 as this project is a consolidation/simplification of earlier logging implementations (v1.x) to a form suitable for sharing and caring. This is the author's first sizeable project release to GitHub. The author only codes part time, more so as a hobby than anything else. Use in the work environment is limited, though an earlier synchronous release (v1) of this code has been included in critical real-time applications that have been operating 24x7 quite successfully for many years dating back to .NET 2.0. The asynchronous queueing was not present. An even earlier release would support C, C++ on GCC, windows and embedded systems. As such the underlying framework as simple as it is should be mature. The author uses this logger library in every single project.
 
-V2 was created and bench marked against both NLog and Serilog as an exercise to determine if it was productive to continue supporting one's own logger library or adopting a 3rd party library. The conclusion was to maintain one's own library (due to simplicity and good performance) but massage it into a form that might be re useable by others. Deep inspection of the source code may identify the odd inconsistency in functional comments, i.e. referencing a feature that does not appear to exist in this release. This is a consequence of migrating legacy code, simplifying and removing code bloat et al to create this simpler implementation.
+V2 is stable and was created and bench marked against both NLog and Serilog as an exercise to determine if it was productive to continue supporting one's own logger library or adopting a 3rd party library. The conclusion was to maintain one's own library (due to simplicity and good performance) but massage it into a form that might be re useable by others. Deep inspection of the source code may identify the odd inconsistency in functional comments, i.e. referencing a feature that does not appear to exist in this release. This is a consequence of migrating legacy code, simplifying and removing code bloat et al to create this simpler implementation.
 
 From a GitHub release perspective, this is my first release so I am not sure what issues might arise from others downloading and using it. Please consider it a Beta Release and conduct some testing of your own. The author has tested this with single and multiple log producers during performance load tests but does not consider this testing definitive. Testing was conducted with .NET Framework 4.8 and Core 3.1 only. The current release has been updated to use the latest .NET runtimes 4.8.1 and 7.0 respectively.
 
@@ -97,7 +99,110 @@ or incorporate into a separate package. Other than that it should be fine for Co
 
 # Usage
 
-The critical code components for utilising CsTool.Logger are:
+## Basic Usage
+```C#
+	// Include CsTool.Logger for Framework, or CsTool.Core.Logger for .NET Core
+	using CsTool.Logger;
+
+	namespace MyApplication
+	{
+		public class MyClass
+		{
+			static int Main(string[] args)
+			{
+				try
+				{
+					...
+					Logger.Write("Welcome to my app");
+					...
+					Logger.Write(LogEventLevel.Verbose,"Arguments: {0}", string.Join(" ",args));
+					...
+					throw new NotImplementedException("Not yet implemented");
+				}
+				catch ( Exception exception)
+				{
+					// Log the exception
+					Logger.Write(exception, "Bugger");
+				}
+				finally
+				{
+					Logger.Write("Bye");
+				}
+			}
+		}
+	}
+```
+
+# Log priority
+The Logger supports three conventions for log priority. Maximum options for priority are available when
+using the native LogPriority levels.
+1. My Logger historical syntax: LogPriority.{Level}
+```C#
+   public enum LogPriority : Int32
+    {
+        // Lowest value
+        Always = 0,             // Log requests with this priority will always log
+        Fatal = 1,              // Programme cannot continue
+        ImportantInfo = 2,      // Equivalent to Info except will be logged if LogPriority.ErrorCritical is enabled
+        ErrorCritical = 3,      // Exceptions and bad processing errors likely to require code modification
+        ErrorProcessing = 4,    // Normal processing/data errors
+        Warning = 5,            // Data processing or warnings (high priority debug messages)
+        Info = 6,               // General information
+        Debug = 7,              // More detail on processing activities
+        Verbose = 8,            // Extensive detail on processing where used
+        Never = 9999            // If requests were to use this level, it would never log
+        // Highest value
+    }
+```
+2. Serilog compatible levels. This is a subset of LogPriority.
+```c#
+    public enum LogEventLevel : Int32
+    {
+        Verbose = LogPriority.Verbose,
+        Debug = LogPriority.Debug,
+        Information = LogPriority.Info,
+        Warning = LogPriority.Warning,
+        Error = LogPriority.ErrorCritical,
+        Fatal = LogPriority.Fatal
+    }
+```
+3. Nlog compatibility is limited but may be easily extended by expanding the Logger class or migrate to
+ CsTool.Logger or Serilog formats.
+```C#
+	Logger.Info("For info: {0}...",...);
+	Logger.Debug("Some details: {0}...",...);
+	Logger.Fatal(exception,"An exception: {0}",...);
+	Logger.Log(LogLevel.Info,"For info: {0}...",...);
+```
+In addition, the level at which logs are written may be set using the Logger.LogThresholdMaxLevel property. This may be set at any time and will affect all log messages written after the change.
+
+```C#
+    public enum DebugThresholdLevel : Int32
+    {
+        LogNothing = (-1),
+        // Lowest enumeration - most important
+        LogFatal = LogPriority.Fatal,
+        LogImportantInfo = LogPriority.ImportantInfo,
+        LogCritical = LogPriority.ErrorCritical,
+        LogError = LogPriority.ErrorProcessing,
+        LogWarning = LogPriority.Warning ,
+        LogInfo = LogPriority.Info,
+        LogDebug = LogPriority.Debug,
+        LogVerbose  = LogPriority.Verbose,
+        LogEverything = (LogPriority.Never - 1)
+    }
+
+	// Default log level:
+	Logger.LogThresholdMaxLevel = DebugThresholdLevel.LogEverything;
+```
+## More Options
+There are more options available. Some are exposed directly in Logger.*, whilst others are only available via
+Logger.Instance. Some legacy features have not yet been ported or exposed.
+
+The log file path may be modified at any time, but is best done well before your application start processing. The
+path and file prepend details may be changed at any time. The log file is closed and reopened when the path is changed.
+
+The File name convention supports: File Prepend text, enable user name, date and time.
 
 ```C#
 	// Include CsTool.Logger
@@ -112,23 +217,34 @@ The critical code components for utilising CsTool.Logger are:
 
 				// Perform as much tuning right at the start of your programme BEFORE
 				// logging occurs. If the Logger is used prior to tuning, system defaults
-				// will be active. This is OK, just potentially messy,
+				// will be active and the initial log entries will be written to the default location.
+				// This is OK, just potentially messy for application debugging on start up.
+
+				//
+				// Default file name is {ApplicationName}.log
+				// Customisable to: {FilePrepend}_{UserName}_{DateTime}.log
+				//
+				Logger.Instance.EnableUserNamePrepend = true;
+				Logger.FilePrepend = "MyLogs";
+				Logger.FileNameDateFilter = "yyyy-MM-dd";
+
+
+				// Tailor where the log files are stored. The default location is the startup
+				// folder. Specifically {StartupFolder}\Logs. If the folder is not writeable, the
+				// log files will be stored in the user's AppData\Local\Temp folder.
+				// Environment variables are supported.
+                Logger.Instance.SetLogDirectory("%SPECIALLOGS%");
+
 
 				// Set the logging level. This can be changed at any time
 				// Default is DebugThresholdLevel.Everything
-				Logger.LogThresholdMaxLevel = DebugThresholdLevel.Info;
+				Logger.LogThresholdMaxLevel = DebugThresholdLevel.LogWarning;
 
 				// Optionally you can tune it
 				Logger.IsLoseMessageOnBufferFull = true; 		// Default false
 				Logger.CountLoggedMessagesMaximum = 10000;		// Default 100000
 				Logger.CountOldLogFilesToKeep = 2;				// Default 20
 
-				// Optionally tailor the log file. If set FilePrepend and FileNameDateFilter
-				// are used as follows:
-				// 	string dateText = DateTimeOffset.Now.ToString(FileNameDateFilter);
-				// 	name = string.Format("{0} {1}{2}", FilePrepend, dateText, LogFileExtension);
-				Logger.FilePrepend = "MyLogs";
-				Logger.FileNameDateFilter = "yyyy-MM-dd";
 
 				// If the logger DLL is compiled with DEBUG defined, you can also manipulate 
 				// Queueing and Async. This is only really useful when including the shared source
@@ -256,22 +372,31 @@ The enumerations are described below as excerpt from LogPriority.cs
         LogVerbose  = LogPriority.Verbose,
         LogEverything = (LogPriority.Never - 1)
     }
-	```
+```
 
 # TODO List
 
-CsTool.Logger as it stands 
+To name a few:
+* NuGet packaging for simpler support on multiple dotnet frameworks
+* It looks like some of the Logger tuning parameters have not been exposed properly so you may not be able to change the log priority. Might be fixed.
+* Log counters do not generated GUI events.
 
-	# Release Summary
+# Release Summary
 
-	## Version 
-	July 2023
-		First upload to GitHub as a private repository. All previous releases were part of other solutions.
-	Jan 2024
-		Restored some old Windows Forms dialogue box support to allow old projects to utilise the latest library. The CsTool.Wpf project is not ready for release as a full Wpf replacement to any forms interfaces.
-		Added an exception if a new logger is initialised incorrectly. i.e. Do not do: Logger myLogger2 = new Logger("Logger2"); Instead use LogBase myLogger2 = new LogBase("Logger2");
-	Jul 2024
-		Registered on NuGet, looking into packaging, but would like to make this multi framework supportable in the build.
-		It looks like some of the Logger tuning parameters have not been exposed properly so you may not be able to change the log priority. This will be fixed soon.
-		I've been using this release extensively in a multi threading app including SuperSimpleTcp and it works great. Log messages from SuperSimpleTcp, my app and all
-		of the MVVM threads blending nicely with no delay to the app, even when I got timeouts wrong (zero instead of seconds) with extensive logging.
+2004
+* C, C++ implementation of Logger. Not thread safe.
+
+2011
+* C# implementation but embedded within a common utilities library. Partially thread safe.
+
+2014
+* Duplicated sections of code into client applications as common client library.
+* Separate personal DLL thread safe, fast.
+
+2023
+* First upload to GitHub as a private repository. All previous releases were part of other solutions.
+
+2024
+* Restored some old Windows Forms dialogue box support to allow old projects to utilise the latest library. The CsTool.Wpf project is not ready for release as a full Wpf replacement to any forms interfaces.
+* Added an exception if a new logger is initialised incorrectly. i.e. Do not do: Logger myLogger2 = new Logger("Logger2"); Instead use LogBase myLogger2 = new LogBase("Logger2");
+* Registered on NuGet, looking into packaging, but would like to make this multi framework supportable in the build.

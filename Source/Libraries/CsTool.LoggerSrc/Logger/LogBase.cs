@@ -51,7 +51,7 @@ namespace CsTool.Logger
     /// 
     ///     optional tweaks (available in an alternate code stream):
     ///         Logger.IsWarningLogFileEnabled = true;  // Create Warning log file (Warnings and Errors)
-    ///         Logger.IsErrorLogFileEnabled = true;  // Create Error log file (Errors only)
+    ///         Logger.IsErrorLogFileEnabled = true;  // Create ErrorProcessing log file (Errors only)
     ///         Logger.IsInfoLogFileEnabled = false;    // Disable primary log file (would contain all messages)
     ///         Logger.FileNamePrepend = "My Log File"; // A different name for he log files
     /// </code>
@@ -89,10 +89,13 @@ namespace CsTool.Logger
 
         /// <summary>
         /// Initialise class. If no filename is provided full initialisation is deferred.
+        /// Name format: {FilePrepend}_{UserName}_{DateTime}.log
         /// </summary>
         /// <param name="newFilePrependText">The text string to append the date to in order to create a valid file name.
         /// If date stamping is disabled this is the file name excluding extension.</param>
-        public LogBase(string newFilePrependText = null)
+        /// <param name="enableUserName">If true, the user name is appended to the file name.</param>
+        /// <param name="fileNameDateTime">The date format to append to the file name.</param>
+        public LogBase(string newFilePrependText = null, bool enableUserName = false, string fileNameDateTime = null)
         {
             lock (padLockProperties)
             {
@@ -106,8 +109,10 @@ namespace CsTool.Logger
                 //
                 if (!String.IsNullOrWhiteSpace(newFilePrependText))
                     filePrepend = newFilePrependText;
-                else
-                    filePrepend = LogUtilities.MyProcessName;
+
+                enableUserNamePrepend = enableUserName;
+                if (fileNameDateTime != null )
+                    FileNameDateFilter = fileNameDateTime;
 
                 //
                 // Create the log file name
@@ -120,7 +125,8 @@ namespace CsTool.Logger
                 SetLogDirectory();
 
                 //
-                // Backup old log files
+                // Backup old log files, this will rename the existing file unless append is enabled.
+                // but the new log file is not opened until a message is ready to be consumed.
                 //
                 if ( isLogFileFirstOpen && !isAppendFileEnabled )
                 {
@@ -128,16 +134,24 @@ namespace CsTool.Logger
                     CountLoggedMessages = 0;
                 }
             }
-            timer = new System.Timers.Timer(2000);
-            timer.Elapsed += OnTimedEvent;
-            timer.AutoReset = true;
-            timer.Enabled = true;
 
+#if DEBUGLOGSTART
+            // Writes an initial log file in the user's temp folder in case the main logger gets
             Log.Write("CsTool.Logger Logfile: {0}", FullLogFileName);
+#endif // DEBUGLOGSTART
+
             //
             // Monitor/process the logging queue
             //
             ConsumeMessages();
+
+            //
+            // Setup a timed file flush action
+            //
+            timer = new System.Timers.Timer(2000);
+            timer.Elapsed += OnTimedEvent;
+            timer.AutoReset = true;
+            timer.Enabled = true;
         }
 
         /// <summary>
@@ -184,7 +198,7 @@ namespace CsTool.Logger
                         LogQueuedMessage(p);
                     }
                 }
-                if (!IsStreamWriteable())
+                if (streamWriter == null || !streamWriter.BaseStream.CanWrite)
                     CreateNewLogFile();
                 streamWriter.Write(
                     "\n============================== Logging stopped : {0:yyyy-MMM-dd ddd HH:mm:ss} : Shutdown requested =====================",
@@ -226,7 +240,7 @@ namespace CsTool.Logger
                     IsSyncDue = true;
                     if (bc.Count == 0)
                     {
-                        Logger.LogCommand(LogCommandAction.Flush);
+                        Logger.Instance.LogCommand(LogCommandAction.Flush);
                     }
                 }
             }
@@ -314,20 +328,24 @@ namespace CsTool.Logger
         /// <summary>
         /// Generate the log file name excluding path
         /// </summary>
-        /// <returns>Th name of the log file</returns>
+        /// <returns>The name of the log file</returns>
         private string CreateLogFileName()
         {
             string name;
             try
             {
+                string prependName = FilePrepend;
+                if (EnableUserNamePrepend)
+                    prependName += "_" + Environment.UserName;
+
                 if (!FileNameDateFilter.IsNullOrWhiteSpace())
                 {
                     string dateText = DateTimeOffset.Now.ToString(FileNameDateFilter);
-                    name = string.Format("{0} {1}{2}", FilePrepend, dateText, LogFileExtension);
+                    name = string.Format("{0}_{1}{2}", prependName, dateText, LogFileExtension);
                 }
                 else
                 {
-                    name = string.Format("{0}{1}", FilePrepend, LogFileExtension);
+                    name = string.Format("{0}{1}", prependName, LogFileExtension);
                 }
             }
             catch ( Exception exception )
@@ -367,6 +385,9 @@ namespace CsTool.Logger
 
                 Stream _outputStream = System.IO.File.Open(FullLogFileName, fileMode, FileAccess.Write, FileShare.Read);
 
+                IsFileNameChangePending = false;
+                FullLogFileNameOpen = FullLogFileName;
+
                 // Parameter reassignment.
                 _encoding = _encoding ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
@@ -375,7 +396,7 @@ namespace CsTool.Logger
                 CountLoggedMessages = 0;
 
                 // If the queue is full on sudden shutdown, messages are lost.
-                // Suppressing does helps with processing about 1500 messages. Suggestions welcome for improvement.
+                // Suppressing does help with processing about 1500 messages. Suggestions welcome for improvement.
                 //GC.SuppressFinalize(streamWriter);
                 //GC.SuppressFinalize(LogWriter);
 
@@ -393,8 +414,10 @@ namespace CsTool.Logger
         }
 
         /// <summary>
-        /// Set the base directory for all logging. The default location is {StartupPath}\Logs
+        /// Set the base directory for all logging. The default location is {StartupPath}\Logs.
         /// </summary>
+        /// <param name="preferredPath">The preferred path for the log files. If not provided the startup path is used.</param>
+        /// <returns>The path to the log files</returns>
         /// <remarks>The application may be started from different locations, thus we check
         /// to ensure that the startup path is not windows read only application paths
         /// or special reserved paths, or visual studio build paths.
@@ -408,17 +431,16 @@ namespace CsTool.Logger
         /// Use of IsPathReserved(path) also confirms that the path is writeable so that the
         /// sub folder <code>Logs<code> may be created.
         /// </remarks>
-        public void SetLogDirectory(string preferredPath = null)
+        public string SetLogDirectory(string preferredPath = null)
         {
-            string basePath;
             if (preferredPath.IsNullOrWhiteSpace())
             {
-                preferredPath = LogUtilities.MyStartupPath;
+                preferredPath = LogUtilities.MyStartupPath + @"\Logs";
             }
             try
             {
-                basePath = LogUtilities.GetWriteablePath(preferredPath);
-                preferredPath = basePath + @"\Logs";
+                preferredPath = LogUtilities.GetWriteablePath(preferredPath);
+
                 if (!Directory.Exists(preferredPath))
                 {
                     Directory.CreateDirectory(preferredPath);
@@ -432,6 +454,7 @@ namespace CsTool.Logger
             {
                 LogFilePath = preferredPath;
             }
+            return LogFilePath;
         }
 
         #endregion FileMethods

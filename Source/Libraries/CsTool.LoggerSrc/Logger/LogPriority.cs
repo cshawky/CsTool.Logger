@@ -49,7 +49,20 @@ namespace CsTool.Logger
         Debug = LogPriority.Debug,
         Information = LogPriority.Info,
         Warning = LogPriority.Warning,
-        Error = LogPriority.ErrorCritical,
+        Error = LogPriority.ErrorProcessing,
+        Fatal = LogPriority.Fatal
+    }
+
+    /// <summary>
+    /// NLog LegLevels for compatibility: TODO: implement compatible interfaces
+    /// </summary>
+    public enum LogLevel : Int32
+    {
+        Trace = LogPriority.Always,
+        Debug = LogPriority.Debug,
+        Info = LogPriority.Info,
+        Warn = LogPriority.Warning,
+        Error = LogPriority.ErrorProcessing,
         Fatal = LogPriority.Fatal
     }
 

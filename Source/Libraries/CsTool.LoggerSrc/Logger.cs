@@ -122,6 +122,9 @@ namespace CsTool.Logger
         //
         // These methods are the latest implementations: Refer to class iLogBase for minimum interfaces.
         //
+        // TODO Put method and properties summaries here for intellicode
+        //
+
         public static void Close() => Instance.CloseAndFlush();
         public static void CloseAndFlush() => Instance.CloseAndFlush();
         public static string ConstructExceptionMessage(Exception exception, string simpleMessage) => Instance.ConstructExceptionMessage(exception, simpleMessage);
@@ -130,6 +133,10 @@ namespace CsTool.Logger
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
 
+        /// <summary>
+        /// Set the base directory for all logging. The default location is {StartupPath}\Logs.
+        /// </summary>
+        public static void SetLogDirectory(string preferredPath) => Instance.SetLogDirectory(preferredPath);
         public static void Write(string messageTemplate) => Instance.Write(LogPriority.Info, messageTemplate);
         public static void Write(string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Info, messageTemplate, propertyValues);
         public static void Write(LogPriority level, string messageTemplate) => Instance.Write(level, messageTemplate);
@@ -143,26 +150,56 @@ namespace CsTool.Logger
         public static void Write(LogPriority level, Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(level, exception, messageTemplate, propertyValues);
 
         //
-        // A few NLog log compatible method names
+        // A few NLog log compatible method names, mainly for some test comparison. TODO Implement more if needed.
         //
+        /// <summary>
+        /// NLog compatible log method. This method is not recommended for new applications.
+        /// </summary>
         public static void Info(string messageTemplate) => Instance.Write(LogEventLevel.Information, messageTemplate, null);
+        /// <summary>
+        /// NLog compatible log method. This method is not recommended for new applications.
+        /// </summary>
         public static void Info(string messageTemplate, params object[] propertyValues) => Instance.Write(LogEventLevel.Information, messageTemplate, propertyValues);
+        /// <summary>
+        /// NLog compatible log method. This method is not recommended for new applications.
+        /// </summary>
         public static void Debug(string messageTemplate) => Instance.Write(LogEventLevel.Debug, messageTemplate, null);
+        /// <summary>
+        /// NLog compatible log method. This method is not recommended for new applications.
+        /// </summary>
         public static void Debug(string messageTemplate, params object[] propertyValues) => Instance.Write(LogEventLevel.Debug, messageTemplate, propertyValues);
+
+        /// <summary>
+        /// NLog compatible log method. This method is not recommended for new applications.
+        /// </summary>
+        public static void Log(LogLevel logLevel, string messageTemplate, params object[] propertyValues) => Instance.Write((LogPriority)logLevel, messageTemplate, propertyValues);
 
         //
         // Basic Serilog equivalent interfaces (some) to assist if migrating to/from Serilog.
         // Only methods using LogEventLevel as the priority are supported by Sirilog.
+        /// <summary>
+        /// Serilog compatible log method.
+        /// </summary>
         public static void Write(LogEventLevel level, string messageTemplate) => Instance.Write(level, messageTemplate, null);
+        /// <summary>
+        /// Serilog compatible log method.
+        /// </summary>
         public static void Write(LogEventLevel level, string messageTemplate, params object[] propertyValues) => Instance.Write(level, messageTemplate, propertyValues);
+        /// <summary>
+        /// Serilog compatible log method.
+        /// </summary>
         public static void Write(LogEventLevel level, Exception exception, string messageTemplate) => Instance.Write((LogPriority)level, exception, messageTemplate);
 
-        //
-        // CsTool.Logger interfaces for easy exception logging.
-        // Compatible with older/legacy CsTool.CoreUtilities.MyLogger Interfaces
-        //
-        // Exceptions may also be processed using Logger.Write(exception,...
+        /// <summary>
+        /// Legacy Interface for easy exception logging. Use Logger.Write(exception,...) instead.
+        /// </summary>
+        /// <param name="exception">The exception will be added to the log message</param>
         public static void LogExceptionMessage(Exception exception) => Instance.Write(LogPriority.ErrorProcessing, exception, "Exception");
+ 
+        /// <summary>
+        /// Legacy Interface for easy exception logging. Use Logger.Write(exception,...) instead.
+        /// </summary>
+        /// <param name="exception">The exception will be added to the log message</param>
         public static void LogExceptionMessage(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
 
         //

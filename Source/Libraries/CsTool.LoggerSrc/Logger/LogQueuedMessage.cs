@@ -45,6 +45,11 @@ namespace CsTool.Logger
             // Record when message gets processed
             DateTimeOffset date = DateTimeOffset.Now;
 
+#if DEBUGLOGGER2
+            // Log trace for the logger consumer. Use sparingly. There is no log management for this backup logger.
+            Log.Write("LogQueuedMessage: " + p.Command.ToString() + ": " + p.Msg);
+#endif // DEBUGLOGGER2
+
             switch (p.Command)
             {
                 case LogCommandAction.Log:
@@ -89,8 +94,9 @@ namespace CsTool.Logger
                             message = string.Format("{0}{1}", LogNewLine, p.Msg);
                         }
 
-                        if (!IsStreamWriteable())
+                        if (streamWriter == null || !streamWriter.BaseStream.CanWrite)
                             CreateNewLogFile();
+
                         streamWriter.WriteLine(message);
                         if (IsSyncDue)
                         {
@@ -130,13 +136,20 @@ namespace CsTool.Logger
                     if (p.Args != null && p.Args.Length > 0)
                     {
                         var value = p.Args[0];
-                        if (value.GetType() == typeof(string))
+                        if (value?.GetType() == typeof(string))
                         {
-                            CloseAndFlush();
-                            filePrepend = value.ToString();
+                            // Skip this change if the name has changed again
+                            if (filePrepend != value.ToString()) break;
+
                             LogFileName = CreateLogFileName();
-                            BackupLogFiles();
-                            isLogFileFirstOpen = true;
+                            // Skip if the name is the same as the open file name
+                            if (FullLogFileName != FullLogFileNameOpen)
+                            {
+                                if (streamWriter != null)
+                                    CloseAndFlush();
+                                BackupLogFiles();
+                                isLogFileFirstOpen = true;
+                            }
                         }
                     }
                     break;
@@ -180,16 +193,6 @@ namespace CsTool.Logger
             {
                 CountLoggedErrors++;
             }
-        }
-
-        /// <summary>
-        /// Returns true if the log file is open and writeable
-        /// </summary>
-        /// <returns>Returns true if the log file is open and writeable</returns>
-        private bool IsStreamWriteable()
-        {
-            //return !(LogWriter == null || streamWriter == null || !streamWriter.BaseStream.CanWrite);
-            return !( streamWriter == null || !streamWriter.BaseStream.CanWrite);
         }
     }
 }

@@ -14,7 +14,8 @@ namespace CsTool.Logger
 {
     /// <summary>
     /// The most basic of loggers. Use this implementation as the log of last resort. It is not thread safe
-    /// but should work when little else does. The log file is created in the user's %TEMP%\Logs folder.
+    /// but should work when little else does. The log file is created in the user's %TEMP%\Logs folder
+    /// which should be writeable.
     /// 
     /// </summary>
     public static class Log
@@ -40,6 +41,7 @@ namespace CsTool.Logger
         /// <summary>
         /// Underlying basic file logger with one backup log file. Provided that the default logfile
         /// location is writeable, this interface should log. Else, the application continues.
+        /// This logger is not intended for general use. Use Logger.Write() instead.
         /// </summary>
         /// <param name="formattedMessage">String formatted message</param>
         /// <param name="args">Arguments for the formatted message</param>

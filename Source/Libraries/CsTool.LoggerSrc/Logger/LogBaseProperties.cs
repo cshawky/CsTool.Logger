@@ -9,6 +9,7 @@
 
 namespace CsTool.Logger
 {
+    using CsTool.Extensions;
     using System;
     using System.Collections.Concurrent;
     using System.IO;
@@ -32,7 +33,58 @@ namespace CsTool.Logger
         private Object padLockFileObjects = new Object();
 
         /// <summary>
-        /// Internal copy of the text pre pended to all new filenames.
+        /// Backend field for the <code>IsFileNameChangePending</code> property.
+        /// </summary>
+        private bool isFileNameChangePending = true;
+
+        /// <summary>
+        /// Indicates that the name format of path of the log file has changed and the action
+        /// has not been completed.
+        /// </summary>
+        public bool IsFileNameChangePending
+        {
+            get => isFileNameChangePending;
+            set
+            {
+                lock (padLockFileObjects)
+                {
+                    if (isFileNameChangePending != value)
+                    {
+                        isFileNameChangePending = value;
+                        if ( isFileNameChangePending )
+                            LogCommand(LogCommandAction.Rename, value);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Backend field for the <code>EnableUserNamePrepend</code> property.
+        /// </summary>
+        private bool enableUserNamePrepend;
+
+        /// <summary>
+        /// Enable the inclusion of the user name in the log file name. {FilePrepend}_{UserName}.log
+        /// 
+        /// </summary>
+        public bool EnableUserNamePrepend
+        {
+            get
+            {
+                return enableUserNamePrepend;
+            }
+            set
+            {
+                if (enableUserNamePrepend != value)
+                {
+                    enableUserNamePrepend = value;
+                    LogFileName = CreateLogFileName();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Backend field for the <code>FilePrepend</code> property.
         /// </summary>
         private string filePrepend;
 
@@ -60,17 +112,18 @@ namespace CsTool.Logger
                         // The log file naming convention has changed. Close all files and initialise new log files
                         // Change default pre pended text
                         value = value.Replace(".vshost", "").Replace(".exe", "").Trim();
-                        if (value != filePrepend)
+                        if (filePrepend != value)
                         {
-                            LogCommand(LogCommandAction.Rename, value);
+                            filePrepend = value;
+                            LogFileName = CreateLogFileName();
                         }
                     }
                 }
             }
         }
 
-      /// <summary>
-        /// The current file name excluding path
+        /// <summary>
+        /// Backend field for the <code>LogFileName</code> property.
         /// </summary>
         private string logFileName;
 
@@ -82,7 +135,7 @@ namespace CsTool.Logger
         /// <summary>
         /// File stream writer
         /// </summary>
-        /// <remarks>StreamWriter is not thread safe, so the Logger marshalls all logging to a single thread.</remarks>
+        /// <remarks>StreamWriter is not thread safe, so the Logger marshals all logging to a single thread.</remarks>
         private StreamWriter streamWriter;
 
         /// <summary>
@@ -165,11 +218,27 @@ namespace CsTool.Logger
         public uint CountOldLogFilesToKeep { get; set; } = 20;
 
         /// <summary>
+        /// Backend field for <code>FileNameDateFilter</code> property.
+        /// </summary>
+        private string fileNameDateFilter;
+
+        /// <summary>
         /// Specify a date format to include in the file name. Examples:
         ///     "yyyy-MM-dd"
         ///     "yyyy-MM"
         /// </summary>
-        public string FileNameDateFilter { get; set; } = String.Empty;
+        public string FileNameDateFilter
+        {
+            get => fileNameDateFilter;
+            set
+            {
+                if (fileNameDateFilter != value)
+                {
+                    fileNameDateFilter = value;
+                    LogFileName = CreateLogFileName();
+                }
+            }
+        }
 
         /// <summary>
         /// When enabled, LogExceptionMessage method calls are counted and stored in CoreUtilities Model.
@@ -355,11 +424,17 @@ namespace CsTool.Logger
             }
             private set
             {
-                logFilePath = value;
+                if (logFilePath != value)
+                {
+                    lock (padLockProperties)
+                    {
+                        logFilePath = value;
+                    }
+                }
             }
         }
 
-         #endregion Properties
+        #endregion Properties
 
         //
         // -----------------------------------------------------------------------------------------
@@ -369,7 +444,8 @@ namespace CsTool.Logger
 
 
         /// <summary>
-        /// The name of the current log file excluding path
+        /// The name of the current log file excluding path. LogFileName should be generated
+        /// by <code>CreateLogFileName()</code> whenever the file name parameters change.
         /// </summary>
         public string LogFileName
         {
@@ -381,10 +457,13 @@ namespace CsTool.Logger
             }
             private set
             {
-                string newName = Path.GetFileName(value);
-                if (newName != logFileName)
+                if (logFileName != value)
                 {
-                    logFileName = newName;
+                    lock (padLockProperties)
+                    {
+                        logFileName = value;
+                        IsFileNameChangePending = true;
+                    }
                 }
             }
         }
@@ -395,6 +474,26 @@ namespace CsTool.Logger
         public string FullLogFileName
         {
             get => LogFilePath + "\\" + LogFileName;
+        }
+
+        /// <summary>
+        /// Backend field for the <code>FullLogFileNameOpen</code> property.
+        /// </summary>
+        private string fullLogFileNameOpen = null;
+
+        /// <summary>
+        /// The full name and path of the log file that is currently open.
+        /// </summary>
+        public string FullLogFileNameOpen
+        {
+            get => fullLogFileNameOpen;
+            private set
+            {
+                lock (padLockProperties)
+                {
+                    fullLogFileNameOpen = value;
+                }
+            }
         }
 
         /// <summary>
