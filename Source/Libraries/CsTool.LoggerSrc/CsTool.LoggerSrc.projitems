@@ -9,7 +9,9 @@
     <Import_RootNamespace>CsTool.LoggerSrc</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Extensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods\Extensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Model\ModelSettingsAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Model\SampleModelSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILogBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\Log.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\LogPriority.cs" />
@@ -20,8 +22,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logger\LogQueuedMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\QueuedMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LogUtilities.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\ApplicationDefaults.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\MyUtilities.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\XmlSettingsParsing.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)LICENCE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Model\" />
   </ItemGroup>
 </Project>

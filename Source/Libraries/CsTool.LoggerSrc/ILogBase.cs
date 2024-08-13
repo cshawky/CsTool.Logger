@@ -13,7 +13,7 @@ namespace CsTool.Logger
 
     /// <summary>
     /// The Thread Safe Logger interface for your application.
-    /// Public LogMessage/Write methods (overrideable).
+    /// Public LogMessage/Write methods (overridable).
     /// </summary>
     /// <remarks>Refer to <code>LogBase</code> for a better explanation
     /// 
@@ -54,5 +54,6 @@ namespace CsTool.Logger
         //
         void LogCommand(LogCommandAction logCommand);
         void LogCommand(LogCommandAction logCommand, params object[] args);
+
     }
 }

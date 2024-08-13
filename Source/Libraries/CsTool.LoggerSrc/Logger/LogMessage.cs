@@ -180,6 +180,7 @@ namespace CsTool.Logger
             }
             catch /* ( Exception exception2 ) */
             {
+                // TODO We could write this to the low level logger, Log.Write()
                 // Exception most likely related to LogMessage.
                 //throw new ApplicationException( errorMessage, exception2 );
             }
@@ -226,11 +227,10 @@ namespace CsTool.Logger
             DateTimeOffset date = DateTimeOffset.Now;
 
             //
-            // A form method for displaying some error info
+            // A formal method for displaying some error info. We are not using ConstructExceptionMessage() in order
+            // to maintain code execution performance.
             //
-            string errorMessage = System.String.Empty;
-
-            errorMessage = string.Concat(
+            string errorMessage = string.Concat(
                             messageFormat,
                             "\n**Exception: ", exception.Message,
                             "\n  Line: ", exception.Source,
@@ -246,8 +246,8 @@ namespace CsTool.Logger
         /// The entire message is indented.
         /// </summary>
         /// <param name="logPriority"></param>
-        /// <param name="rawmessage"></param>
-        public virtual void WriteRaw(LogPriority logPriority, string rawmessage, params object[] args)
+        /// <param name="rawMessage"></param>
+        public virtual void WriteRaw(LogPriority logPriority, string rawMessage, params object[] args)
         {
             if ((Int32)logPriority > (Int32)LogThresholdMaxLevel) return;
             if (IsLoseMessageOnBufferFull && bc.Count() >= bc.BoundedCapacity) return;
@@ -259,15 +259,15 @@ namespace CsTool.Logger
                 {
                     // Unfortunately we have to use try() for this method to assist the programmer debug logging messages which
                     // can be runtime configurable.
-                    rawmessage = string.Format(rawmessage, args);
+                    rawMessage = string.Format(rawMessage, args);
                 }
                 catch (Exception exception)
                 {
-                    rawmessage += ConstructExceptionMessage(exception, ": LogRawMessage formatting error");
+                    rawMessage += ConstructExceptionMessage(exception, ": LogRawMessage formatting error");
                 }
             }
             // Queue raw message without date stamp
-            QueuedMessage p = new QueuedMessage(logPriority, DateTimeOffset.MinValue, rawmessage, args);
+            QueuedMessage p = new QueuedMessage(logPriority, DateTimeOffset.MinValue, rawMessage, args);
             TryAdd(p);
         }
 

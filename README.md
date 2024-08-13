@@ -233,7 +233,7 @@ The File name convention supports: File Prepend text, enable user name, date and
 				// folder. Specifically {StartupFolder}\Logs. If the folder is not writeable, the
 				// log files will be stored in the user's AppData\Local\Temp folder.
 				// Environment variables are supported.
-                Logger.Instance.SetLogDirectory("%SPECIALLOGS%");
+				Logger.Instance.SetLogDirectory("%SPECIALLOGS%");
 
 
 				// Set the logging level. This can be changed at any time

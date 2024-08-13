@@ -5,23 +5,10 @@
 // Please refer to LICENCE.txt in this project folder.
 // </copyright>
 // -------------------------------------------------------------------------------------------------------------------------
-
 namespace CsTool.Logger
 {
     using System;
-    using System.Collections.Concurrent;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.Data;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Linq;
-    using System.Runtime.InteropServices;
-    using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
-    using CsTool.Extensions;
 
     public class QueuedMessage
     {

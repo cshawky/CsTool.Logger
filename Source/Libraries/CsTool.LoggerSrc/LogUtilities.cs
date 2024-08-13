@@ -12,14 +12,15 @@ namespace CsTool.Logger
     using System.Diagnostics;
     using System.IO;
     using System.Reflection;
-    using System.Security;
 //#if NETFRAMEWORK
     using System.Security.Permissions;
-//#endif
-    using CsTool.Extensions;
+    //#endif
+    using ExtensionMethods;
 
     /// <summary>
-    /// MyUtilities static class. Supporting methods for the <code>Logger</code> class.
+    /// LogUtilities static class. Supporting methods for the <code>Logger,Logbase</code> classes.
+    /// See also <code>MyUtilities</code> which is an extraction from CsTool.CoreUtilities.Utilities
+    /// TODO: merge and consolidate, simplify.
     /// </summary>
     /// <remarks>
     /// Properties: <code>MyProcessName,MyStartupPath,MyAssemblyPath</code>
@@ -93,7 +94,7 @@ namespace CsTool.Logger
         private static string myStartupPath;
 
         /// <summary>
-        /// The path that the application startup with
+        /// The path that the application starts with
         /// </summary>
         public static string MyStartupPath
         {
@@ -166,10 +167,11 @@ namespace CsTool.Logger
         /// <remarks>The application may be started from different locations, thus we check
         /// to ensure that the startup path is not windows read only application paths
         /// or special reserved paths, or visual studio build paths.
+        ///
         /// The order of exclusions and preferences for the writeable path is as follows:
-        /// - Exclude all Windows programme paths
-        /// - Exclude Visual Studio bin paths
-        /// - Application startup path (initial working directory), but not the application/DLL path
+        /// 
+        /// - Exclude all Windows programme paths (exclude Windows, Program Files, SysWow64 etc)
+        /// - Application startup path (initial working directory)
         /// - User's %TEMP% path: Nominate a sub folder for the application
         /// - User's desktop path: Nominate sub folder for the application
         ///
@@ -178,9 +180,16 @@ namespace CsTool.Logger
         /// </remarks>
         public static string GetWriteablePath(string path = null)
         {
+            //
+            // Preferred path if not specified is the startup path
+            //
             if (path.IsNullOrWhiteSpace())
                 path = MyStartupPath;
             //Log.Write("GetWriteablePath: Check path {0}", path);
+
+            //
+            // Exclude all Visual Studio and Windows programme paths. i.e. all admin and read only paths
+            //
             if (IsPathReserved(path))
             {
                 path = Environment.GetEnvironmentVariable("TEMP");
@@ -202,8 +211,10 @@ namespace CsTool.Logger
                     throw new DirectoryNotFoundException("The application could not find a suitable log path to write to. Please ensure that the startup path, %TEMP% path or Desktop path are writeable");
                 }
             }
-            // To avoid exceptions in calling code that forgets to create the folder, where the path does not yet exist and the parent folder is writeable
-            // we create the folder.
+            //
+            // To avoid exceptions in calling code that forgets to create the folder,
+            // create the folder where the path does not yet exist and the parent folder is writeable
+            //
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
@@ -312,7 +323,7 @@ namespace CsTool.Logger
         /// <param name="path">Optional path to check. Use the Current working directing if null.</param>
         /// <param name="disallowNetworkPath">If True a network path like \\RemoteComputer\FolderShare is considered reserved.</param>
         /// <returns>True if the path is considered a programme path, reserved path or read only.</returns>
-        public static bool IsPathReserved(string path = null, bool disallowNetworkPath = true)
+        public static bool  IsPathReserved(string path = null, bool disallowNetworkPath = true)
         {
             //Log.Write("IsPathReserved: Requested path {0}", path);
             if (path == null)

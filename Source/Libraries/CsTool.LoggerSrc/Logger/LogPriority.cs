@@ -33,8 +33,8 @@ namespace CsTool.Logger
         Warning = 5,            // Data processing or warnings (high priority debug messages)
         Info = 6,               // General information
         Debug = 7,              // More detail on processing activities
-        Verbose = 8,            // Extensive detail on processing where used
-        Never = 9999            // If requests were to use this level, it would never log
+        Verbose = 8            // Extensive detail on processing where used
+        //,Never = 9999            // If requests were to use this level, it would never log
         // Highest value
     }
 
@@ -90,7 +90,7 @@ namespace CsTool.Logger
     /// </remarks>
     public enum DebugThresholdLevel : Int32
     {
-        LogNothing = (-1),
+        //LogNothing = (-1),
         // Lowest enumeration - most important
         LogFatal = LogPriority.Fatal,
         LogImportantInfo = LogPriority.ImportantInfo,
@@ -99,7 +99,7 @@ namespace CsTool.Logger
         LogWarning = LogPriority.Warning ,
         LogInfo = LogPriority.Info,
         LogDebug = LogPriority.Debug,
-        LogVerbose  = LogPriority.Verbose,
-        LogEverything = (LogPriority.Never - 1)
+        LogVerbose  = LogPriority.Verbose
+        //,LogEverything = (LogPriority.Never - 1)
     }
 }

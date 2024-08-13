@@ -5,23 +5,132 @@
 // Please refer to LICENCE.txt in this project folder.
 // </copyright>
 // -------------------------------------------------------------------------------------------------------------------------
-
-
 namespace CsTool.Logger
 {
-    using CsTool.Extensions;
     using System;
     using System.Collections.Concurrent;
     using System.IO;
     using System.Text;
-    //using System.Windows.Navigation;
+    using ExtensionMethods;
+    using Model;
 
     /// <summary>
     /// The Thread Safe Logger interface for your application.
     /// </summary>
-    /// <remarks>Refer to <code>LogBase</code> for a better explanation</remarks>
+    /// <remarks>Refer to <code>LogBase</code> for a better explanation
+    /// 
+    /// <code>LogBaseProperties</code> may be tailored at start up by the application defaults xml file. Thus initial default
+    /// values are set in class <code>ApplicationDefaults</code> and not here.
+    /// </remarks>
+    [ModelSettingsClass]
     public partial class LogBase : ILogBase
     {
+        //
+        // -----------------------------------------------------------------------------------------
+        //
+        #region ModelSettings Properties
+
+        /// <summary>
+        /// Maximum number of queued messages before messages are lost or logging is blocked.
+        /// TODO: No point allowing this setting to change because the queue is already created
+        /// before it can be changed.
+        /// </summary>
+        //[ModelSettingsProperty]
+        private int MaximumLogQueueSize { get; set; } = 100000;
+
+        /// <summary>
+        /// When disabled, the logging will wait until the buffer is no longer full.
+        /// When enable, the log message is lost.
+        /// </summary>
+        [ModelSettingsProperty]
+        public bool IsLoseMessageOnBufferFull { get; set; } = false;
+
+        /// <summary>
+        /// The maximum number of logged messages before the file is closed and a new file open.
+        /// TODO - implement a maximum file size solution.
+        /// </summary>
+        [ModelSettingsProperty]
+        public uint CountLoggedMessagesMaximum { get; set; } = 100000;
+
+
+        /// <summary>
+        /// The default number of old log files to keep. Depending on the application a new file is created each time the programme
+        /// is started or when the log file is Closed, Flushed or created.
+        /// </summary>
+        [ModelSettingsProperty]
+        public uint CountOldLogFilesToKeep { get; set; } = 20;
+
+        /// <summary>
+        /// Specify a date format to include in the file name. Examples:
+        ///     "yyyy-MM-dd"
+        ///     "yyyy-MM"
+        /// </summary>
+        [ModelSettingsProperty]
+        public string FileNameDateFilter
+        {
+            get => fileNameDateFilter;
+            set
+            {
+                if (fileNameDateFilter != value)
+                {
+                    fileNameDateFilter = value;
+                    LogFileName = CreateLogFileName();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Absolute  directory to put the log files.
+        /// <code>SetLogDirectory</code> ensures the path is writeable and not "reserved".
+        /// </summary>
+        [ModelSettingsProperty]
+        public string LogFilePath
+        {
+            get
+            {
+                if (logFilePath == null)
+                {
+                    lock (padLockProperties)
+                    {
+                        SetLogDirectory();
+                    }
+                }
+                return logFilePath;
+            }
+            private set
+            {
+                if (logFilePath != value)
+                {
+                    lock (padLockProperties)
+                    {
+                        logFilePath = value;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The threshold debug priority that will enable log messages to be written.
+        /// The lower the integer value of DebugThresholdDefault, the fewer debug messages will be displayed.
+        /// Setting the LogThresholdMaxLevel to LogPriority.Never (a very big number) will disable all logging.
+        /// Usage="LogFatal LogImportantInfo LogCritical LogError LogWarning LogInfo LogDebug LogVerbose" 
+        /// </summary>
+        /// <remarks >
+        /// The supported debug levels are defined in class DebugThresholdLevel. To change the debug level
+        /// enabled, set MyLogger.Logger.DebugThresholdDefault to the desired DebugThresholdLevel.
+        ///
+        /// For the programmer, when calling MyLogger.Logger.Write(priority,message) set the priority
+        /// number according to the importance of your log message. A value of zero will always log, values
+        /// greater than zero will only be logged if the value matches or is less than the setting in DebugThresholdDefault.
+        /// </remarks>
+        [ModelSettingsProperty]
+        public DebugThresholdLevel LogThresholdMaxLevel { get; set; } = DebugThresholdLevel.LogInfo;
+
+        [ModelSettingsInstance]
+        public SampleModelSettings SampleSettings { get; set; } = new SampleModelSettings();
+
+        #endregion ModelSettings Properties
+
         //
         // -----------------------------------------------------------------------------------------
         //
@@ -147,21 +256,6 @@ namespace CsTool.Logger
 
         #region Properties
 
-        /// <summary>
-        /// The threshold debug priority that will enable log messages to be written.
-        /// The lower the integer value of DebugThresholdDefault, the fewer debug messages will be displayed.
-        /// Setting the LogThresholdMaxLevel to LogPriority.Never (a very big number) will disable all logging.
-        /// </summary>
-        /// <remarks >
-        /// The supported debug levels are defined in class DebugThresholdLevel. To change the debug level
-        /// enabled, set MyLogger.Logger.DebugThresholdDefault to the desired DebugThresholdLevel.
-        ///
-        /// For the programmer, when calling MyLogger.Logger.LogMessage(priority,message) set the priority
-        /// number according to the importance of your log message. A value of zero will always log, values
-        /// greater than zero will only be logged if the value matches or is less than the setting in DebugThresholdDefault.
-        /// </remarks>
-        public DebugThresholdLevel LogThresholdMaxLevel { get; set; } = DebugThresholdLevel.LogEverything;
-
         public int LogQueueCount
         {
             get { return bc.Count; }
@@ -192,53 +286,11 @@ namespace CsTool.Logger
         /// </summary>
         private string LogFileExtension { get; set; } = ".log";
 
-        /// <summary>
-        /// Maximum number of queued messages before messages are lost or logging is blocked.
-        /// TODO: No point allowing this setting to change because the queue is already created
-        /// before it can be changed.
-        /// </summary>
-        private int MaximumLogQueueSize { get; set; } = 100000;
-
-        /// <summary>
-        /// When disabled, the logging will wait until the buffer is no longer full.
-        /// When enable, the log message is lost.
-        /// </summary>
-        public bool IsLoseMessageOnBufferFull { get; set; } = false;
-
-        /// <summary>
-        /// The maximum number of logged messages before the file is closed and a new file open.
-        /// TODO - implement a maximum file size solution.
-        /// </summary>
-        public uint CountLoggedMessagesMaximum { get; set; } = 100000;
-
-        /// <summary>
-        /// The default number of old log files to keep. Depending on the application a new file is created each time the programme
-        /// is started or when the log file is Closed, Flushed or created.
-        /// </summary>
-        public uint CountOldLogFilesToKeep { get; set; } = 20;
 
         /// <summary>
         /// Backend field for <code>FileNameDateFilter</code> property.
         /// </summary>
         private string fileNameDateFilter;
-
-        /// <summary>
-        /// Specify a date format to include in the file name. Examples:
-        ///     "yyyy-MM-dd"
-        ///     "yyyy-MM"
-        /// </summary>
-        public string FileNameDateFilter
-        {
-            get => fileNameDateFilter;
-            set
-            {
-                if (fileNameDateFilter != value)
-                {
-                    fileNameDateFilter = value;
-                    LogFileName = CreateLogFileName();
-                }
-            }
-        }
 
         /// <summary>
         /// When enabled, LogExceptionMessage method calls are counted and stored in CoreUtilities Model.
@@ -405,35 +457,6 @@ namespace CsTool.Logger
             }
         }
 
-        /// <summary>
-        /// Absolute  directory to put the log files.
-        /// <code>SetLogDirectory</code> ensures the path is writeable and not "reserved".
-        /// </summary>
-        public string LogFilePath
-        {
-            get
-            {
-                if (logFilePath == null)
-                {
-                    lock (padLockProperties)
-                    {
-                        SetLogDirectory();
-                    }
-                }
-                return logFilePath;
-            }
-            private set
-            {
-                if (logFilePath != value)
-                {
-                    lock (padLockProperties)
-                    {
-                        logFilePath = value;
-                    }
-                }
-            }
-        }
-
         #endregion Properties
 
         //
@@ -509,7 +532,7 @@ namespace CsTool.Logger
         /// if ( LogPriorityIsEnabled(LogPriority.Debug) )
         /// {
         ///     ...perform some calculations or construct data
-        ///     {YourAppClass}.Logger.LogMessage(LogPriority.Debug, message);
+        ///     {YourAppClass}.Logger.Write(LogPriority.Debug, message);
         /// }
         /// </code>
         /// </remarks>

@@ -5,30 +5,36 @@
 // Please refer to LICENCE.txt in this project folder.
 // </copyright>
 // -------------------------------------------------------------------------------------------------------------------------
-
-using CsTool.Extensions;
-using System;
-using System.IO;
-
 namespace CsTool.Logger
 {
+    using System;
+    using System.Diagnostics;
+    using System.IO;
+    using ExtensionMethods;
+
     /// <summary>
     /// The most basic of loggers. Use this implementation as the log of last resort. It is not thread safe
-    /// but should work when little else does. The log file is created in the user's %TEMP%\Logs folder
+    /// but should work when little else does. The log file is created in the user's %TEMP%\CsTool.Logger folder
     /// which should be writeable.
-    /// 
     /// </summary>
+    /// <remarks>
+    /// Keep this static class simple and avoid reliance on ANY OTHER class so that its initialisation is reliable
+    /// </remarks>
     public static class Log
     {
-        private static string FullFilePath { get; set; } = Environment.GetEnvironmentVariable("TEMP") + @"\Logs";
-        private static string FileName { get; set; } = "CsTool.Logger.txt";
+
+        private static string FullFilePath { get; set; } = Environment.GetEnvironmentVariable("TEMP") + @"\CsTool.Logger"; 
+
+        private static string FileName { get; set; } = @"CsTool.Logger." + Process.GetCurrentProcess().ProcessName
+            .Replace(".vshost", "").Replace("XDesProc", "MyApplication").Replace(".exe", "") + ".log";
+
         private static string fullFileName = FullFilePath + @"\" + FileName;
         public static string FullFileName
         {
             get => fullFileName;
             set
             {
-                if (value.IsNullOrWhiteSpace() || value == FullFileName) return;
+                if (String.IsNullOrWhiteSpace(value) || value == FullFileName) return;
                 fullFileName = value;
                 FullFilePath = Path.GetDirectoryName(value);
                 FileName = Path.GetFileName(value);
@@ -59,7 +65,7 @@ namespace CsTool.Logger
                         if (File.Exists(oldFile)) File.Delete(oldFile);
                         File.Move(FullFileName, oldFile);
                     }
-                    File.AppendAllText(FullFileName, "=================================================================\n");
+                    File.AppendAllText(FullFileName, "================== CsTool.Logger Internal Logger ===============================================\n");
                     isFirstRun = false;
                 }
                 DateTimeOffset date = DateTimeOffset.Now;
@@ -89,41 +95,17 @@ namespace CsTool.Logger
         /// Log an exception message
         /// </summary>
         /// <param name="exception">The exception</param>
-        /// <param name="rawmessage">Unformatted string</param>
-        public static void Write(Exception exception, string rawMessage)
+        /// <param name="formattedMessage">Unformatted string or formatted string with object arguments</param>
+        /// <param name="args">Arguments for the formatted message</param>
+        public static void Write(Exception exception, string formattedMessage, params object[] args)
         {
-            string message = ConstructExceptionMessage(exception, rawMessage);
-            WriteIt(message);
-        }
+            string errorMessage = string.Concat(
+                            formattedMessage,
+                            "\n**Exception: ", exception.Message,
+                            "\n  Line: ", exception.Source,
+                            "\n  StackTrace: ", exception.StackTrace);
 
-        /// <summary>
-        /// Allow the calling application to construct a string equivalent to the exception log message.
-        /// </summary>
-        /// <param name="exception"></param>
-        /// <param name="messageFormat"></param>
-        /// <returns></returns>
-        public static string ConstructExceptionMessage(Exception exception, string rawMessage)
-        {
-            string errorMessage = System.String.Empty;
-            if (exception == null)
-            {
-                errorMessage = "ConstructExceptionMessage: No Exception details were provided!";
-                return errorMessage;
-            }
-            try
-            {
-                errorMessage = string.Concat(
-                                rawMessage,
-                                "\n**Exception: ", exception.Message,
-                                "\n  Line: ", exception.Source,
-                                "\n  StackTrace: ", exception.StackTrace);
-            }
-            catch /* ( Exception exception2 ) */
-            {
-                // Exception most likely related to LogMessage.
-                //throw new ApplicationException( errorMessage, exception2 );
-            }
-            return errorMessage;
+            WriteIt(errorMessage, args);
         }
     }
 }

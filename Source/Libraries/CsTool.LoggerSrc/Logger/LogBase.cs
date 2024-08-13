@@ -8,17 +8,18 @@
 
 namespace CsTool.Logger
 {
-    using CsTool.Extensions;
     using System;
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Security.AccessControl;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Timers;
+    using ExtensionMethods;
 
     /// <summary>
     /// A high performance thread safe Logger interface for your application providing a single global
@@ -45,9 +46,9 @@ namespace CsTool.Logger
     ///     using CsTool.Logger
     ///         Logger.Write("Hello World");
     ///         Logger.Write(LogPriority.Fatal,"Goodbye");
-    ///         Logger.LogMessage(LogPriority.Info, "Hello {0}, MyLogger has been initialised", "World");
+    ///         Logger.Write(LogPriority.Info, "Hello {0}, MyLogger has been initialised", "World");
     ///         string world = "world";
-    ///         Logger.LogMessage($"Hello {world}");
+    ///         Logger.Write($"Hello {world}");
     /// 
     ///     optional tweaks (available in an alternate code stream):
     ///         Logger.IsWarningLogFileEnabled = true;  // Create Warning log file (Warnings and Errors)
@@ -95,10 +96,18 @@ namespace CsTool.Logger
         /// If date stamping is disabled this is the file name excluding extension.</param>
         /// <param name="enableUserName">If true, the user name is appended to the file name.</param>
         /// <param name="fileNameDateTime">The date format to append to the file name.</param>
+        /// <remarks>
+        /// TODO: Use of locks is a recent addition prior to adding the Lazy<> initialisation for cleaner start up.
+        /// </remarks>
         public LogBase(string newFilePrependText = null, bool enableUserName = false, string fileNameDateTime = null)
         {
             lock (padLockProperties)
             {
+                //
+                // Select the initial log file location. It must be writeable and not a reserved folder.
+                //
+                LoadApplicationDefaults();
+
                 //
                 // Create the message FIFO queue
                 //
@@ -107,7 +116,7 @@ namespace CsTool.Logger
                 //
                 // Initialise the filename pre pended text since the pre pended text is provided.
                 //
-                if (!String.IsNullOrWhiteSpace(newFilePrependText))
+                if ( !newFilePrependText.IsNullOrWhiteSpace() )
                     filePrepend = newFilePrependText;
 
                 enableUserNamePrepend = enableUserName;
@@ -120,9 +129,9 @@ namespace CsTool.Logger
                 LogFileName = CreateLogFileName();
 
                 //
-                // Select the initial log file location. It must be writeable and not a reserved folder.
+                // Now validate or set the log file path
                 //
-                SetLogDirectory();
+                SetLogDirectory(LogFilePath);
 
                 //
                 // Backup old log files, this will rename the existing file unless append is enabled.
@@ -134,11 +143,6 @@ namespace CsTool.Logger
                     CountLoggedMessages = 0;
                 }
             }
-
-#if DEBUGLOGSTART
-            // Writes an initial log file in the user's temp folder in case the main logger gets
-            Log.Write("CsTool.Logger Logfile: {0}", FullLogFileName);
-#endif // DEBUGLOGSTART
 
             //
             // Monitor/process the logging queue

@@ -10,13 +10,15 @@ namespace CsTool.Logger
 {
     using System;
     using System.Collections.Specialized;
+    using System.Xml.Linq;
 
     /// <summary>
     /// A Singleton instance for the Async/thread safe logger <code>ILogBase</code>.
-    /// This provides an optional static entry point for logging without the need to
+    /// This provides a static entry point for logging without the need to
     /// separately instantiate and configure the logger before use.
     /// The underlying logger <code>LogBase</code> may be instantiated multiple times
     /// for independent logging streams.
+    /// In theory (not validated), one may also extend the LogBase or Logger classes for your own needs.
     /// </summary>
     public partial class Logger
     {
@@ -26,22 +28,78 @@ namespace CsTool.Logger
         #region Initialisation
 
         /// <summary>
-        /// Explicit static constructor for class <code>LoggerSingleton</code> to tell C# compiler
-        /// not to mark type as beforefieldinit .
-        /// 
-        /// Simplest Usage, no initialisation necessary:
-        /// 
+        /// Singleton interface to the logger.
+        /// Simplest Usage, no initialisation is necessary:
+        /// <code>
         /// Logger.Write("Hello World");
-        /// Logger.Write(LogPriority.Fatal,"Goodbye");
-        /// 
-        /// Multiple Logger interface. Each individual logger is created using new LogBase("LoggerName"):
-        /// 
+        /// Logger.Write(LogPriority.Verbose,"I'd really just like to say Gidday, sounds more Australian :)");
+        /// Logger.Write(exception,"Oh no :( Possible cause: Par0({0}) Par1({1})", par0, par1);
+        /// Logger.Write(LogPriority.Fatal,"Bugger Goodbye");
+        /// </code>
+        ///
+        /// Multiple Logger interface: Each individual logger is created using new LogBase("LoggerName"):
+        /// <code>
         /// LogBase logger1 = new LogBase("Logger1");
         /// LogBase logger2 = new LogBase("Logger2");
         /// logger1.Write("Hello World");
         /// logger2.Write("Hello World");
-        /// 
+        /// </code>
+
         /// </summary>
+        /// <remarks>
+        /// Updated Aug 2024 to take advantage of lazy initialisation over thread locking or simple static initialisation.
+        /// Original source: https://www.dotnetperls.com (actual article no longer available) for reasons 
+        /// why the singleton approach has been used. The author's code base has used Singleton for many years with much success
+        /// except for the rare start up race condition. Code tweaks and the use of Lazy<> and locks tidies it up nicely.
+        /// Smarter Lazy: https://thecodeman.net/posts/how-to-use-singleton-in-multithreading
+        /// Alternative popular double locking: 
+        ///         https://www.c-sharpcorner.com/article/singleton-design-pattern-in-c-sharp-part-one/
+        ///         https://medium.com/@mitesh_shah/improvements-and-implementations-of-the-singleton-pattern-53365c2e19e
+        ///         https://resulhsn.medium.com/better-implementation-of-singleton-pattern-in-net-167b3299b478
+        /// We don't need everything and simplicity is the key.
+        /// Also, we want the Singleton Logger to be initialised early as we expect it to be available early and live late
+        /// to get all pending logs written to file (a work in progress).
+        /// 
+        /// The instance was originally accessed like but initialisation was not thread safe. Good for most applications.
+        /// <code>
+        ///     public static readonly LogBase Instance = new LogBase();
+        /// </code>
+        /// But now the preference is to use built in thread safety through Lazy<> then apply locking mechanisms for the data
+        /// only when necessary (improvements could be applied still).
+        /// 
+        /// <code>
+        ///     private static readonly Lazy<LogBase> instance = new Lazy<LogBase>(() => new LogBase());
+        ///     public static LogBase Instance { get => instance.Value; }
+        /// </code>
+        /// </remarks>
+        private static readonly Lazy<LogBase> instance = new Lazy<LogBase>(() => new LogBase());
+
+        /// <summary>
+        /// Accessor for the Singleton instance of the LogBase. Alternatively access the same singleton
+        /// instance through static class <code>Logger</code> which provides a static interface using
+        /// the more common logging naming conventions such as "Logger.Write()".
+        /// </summary>
+        public static LogBase Instance { get => instance.Value; }
+
+        /// <summary>
+        /// Original notes: Explicit static constructor for class <code>LoggerSingleton</code> to tell C# compiler
+        /// not to mark type as beforefieldinit.
+        /// </summary>
+        /// <remarks>
+        /// Simplest Usage, no initialisation is necessary:
+        /// <code>
+        /// Logger.Write("Hello World");
+        /// Logger.Write(LogPriority.Fatal,"Goodbye");
+        /// </code>
+        ///
+        /// Multiple Logger interface: Each individual logger is created using new LogBase("LoggerName"):
+        /// <code>
+        /// LogBase logger1 = new LogBase("Logger1");
+        /// LogBase logger2 = new LogBase("Logger2");
+        /// logger1.Write("Hello World");
+        /// logger2.Write("Hello World");
+        /// </code>
+        /// </remarks>
         static Logger()
         {
         }
@@ -64,11 +122,6 @@ namespace CsTool.Logger
         ~Logger()
         {
         }
-
-        /// <summary>
-        /// Singleton interface to the logger
-        /// </summary>
-        public static LogBase Instance { get; } = new LogBase();
 
         #endregion Initialisation
 
@@ -232,5 +285,26 @@ namespace CsTool.Logger
         public static void LogMessageWithStats(LogPriority logPriority, string message, bool countAsError = false, bool ignoreExceptions = false) => Instance.LogMessageWithStats(logPriority, message, countAsError, ignoreExceptions);
 
         #endregion Methods
+
+        //
+        // -----------------------------------------------------------------------------------------
+        //
+        #region Configuration File Interface Methods
+
+        /// <summary>
+        /// If you wish to include logging properties in your application defaults file, you can use this method
+        /// to define the correct file name. This enables application specific logging settings.
+        /// </summary>
+        /// <returns>The Filename and extension for the defaults xml file</returns>
+        public static string GetApplicationDefaultsFileName() => LogBase.GetApplicationDefaultsFileName();
+
+        /// <summary>
+        /// Add the logging configuration properties to your application defaults file.
+        /// Create an XElement <CsTool.Logger></CsTool.Logger> with the default logging settings.
+        /// </summary>
+        /// <returns>The created XElement</returns>
+        public static XElement AddLoggingElements() => Instance.AddLoggingElements();
+
+        #endregion Configuration File Interface Methods
     }
 }

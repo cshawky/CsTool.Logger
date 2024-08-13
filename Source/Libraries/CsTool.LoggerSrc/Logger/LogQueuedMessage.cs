@@ -8,13 +8,7 @@
 
 namespace CsTool.Logger
 {
-    using CsTool.Extensions;
     using System;
-    using System.Collections.Concurrent;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// The Thread Safe Logger interface for your application.

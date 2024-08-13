@@ -13,7 +13,8 @@ namespace CsTool.Logger
     using System.Collections.Concurrent;
     using System.IO;
     using System.Text;
-
+    using ExtensionMethods;
+    using Model;
     //
     // Should not be using Windows.Forms. Migrate to WPF or MAUI. Included for historic support.
     //
@@ -51,7 +52,7 @@ namespace CsTool.Logger
         /// </summary>
         private bool isShowMessagesEnabledByDefault;
 
-
+        [ModelSettingsProperty]
         public bool IsShowMessagesEnabledByDefault
         {
             get
