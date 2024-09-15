@@ -14,7 +14,6 @@
     using ExtensionMethods;
     using Utilities;
 
-
     /// <summary>
     /// Logger settings for the application are stored in the application defaults file.
     /// </summary>
@@ -29,9 +28,6 @@
     /// <?xml version="1.0" encoding="utf-8" standalone="yes"?>
     /// <Settings version = "2.0.0" lastsaved="..." xmlns="">
     ///   <AppDefaults version = "2.0.0" lastsaved="..." xmlns="">
-    ///     <Default>
-    ///         <DefaultStartupDirectory>blah</DefaultStartupDirectory>
-    ///     </Default>
     ///     <CsTool.Logger>
     ///         <DefaultLogDirectory>log path</DefaultLogDirectory>
     ///         <LogThresholdMaxLevel>LogInfo</LogThresholdMaxLevel>
@@ -68,7 +64,7 @@
         #endregion
 
         /// <summary>
-        /// Add the logging configuration properties to your application defaults file.
+        /// AddProperty the logging configuration properties to your application defaults file.
         /// i.e. Create an XElement <CsTool.Logger></CsTool.Logger> with the default logging settings.
         /// </summary>
         /// <returns>The created XElement</returns>
@@ -92,57 +88,56 @@
         {
             XDocument xDocument = null;
             XElement xDefaultSection = null;
+            XElement xMySection = null;
+            if (classInstance == null) classInstance = this;
+            string nameSpaceName = classInstance.GetType().Namespace;
+            if (fileName == null)
+                fileName = GetAppDefaultsFileName();
+            string sourcePath = Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
+            string sourceFile = sourcePath + "\\" + fileName;
+
             try
             {
-                if (classInstance == null) classInstance = this;
-                string namespaceName = classInstance.GetType().Namespace;
 
-                if ( fileName == null )
-                    fileName = GetAppDefaultsFileName();
-                string sourcePath = Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
-                string sourceFile = sourcePath + "\\" + fileName;
-                // Check if file exists
-                if (!File.Exists(sourceFile))
-                {
-                    Log.Write("Warning: {0}: Application defaults file not found: {1}", namespaceName, sourceFile);
-                    xDocument = XmlSettingsParsing.CreateXmlDocument(DefaultXmlSectionName);
-                    xDocument.Save(sourceFile);
-                    Log.Write("Warning: {0}: Application defaults file created successfully: {1}", namespaceName, sourceFile);
-                }
                 // Load the settings file
                 try
                 {
-                    xDocument = XDocument.Load(sourceFile);
-                    xDefaultSection = xDocument.Root.Element(DefaultXmlSectionName);
+                    if (File.Exists(sourceFile))
+                    {
+                        xDocument = XDocument.Load(sourceFile);
+                        xDefaultSection = xDocument.Root.Element(DefaultXmlSectionName);
+                        xMySection = xDefaultSection.Element(nameSpaceName);
+                    }
                 }
-                catch (Exception exception)
+                catch
                 {
-                    Log.Write(exception, "Error: {0}: Applications defaults file is corrupted, overwriting", namespaceName);
+                    Write(LogPriority.ErrorCritical, "LoadAppDefaults Element({0}.{1}): File corrupted or missing: {2}", nameSpaceName, classInstance.GetType().Name, sourceFile);
                 }
-
-                if (xDefaultSection == null)
-                {
-                    Log.Write("Error: {0}: Application defaults Section({1}) not found, invalid format", namespaceName, DefaultXmlSectionName);
-                    xDocument = XmlSettingsParsing.CreateXmlDocument(DefaultXmlSectionName);
-                    xDocument.Save(sourceFile);
-                    xDefaultSection = xDocument.Root.Element(DefaultXmlSectionName);
-                    Log.Write("Warning: {0}: Application defaults file created successfully: {1}", namespaceName, sourceFile);
-                }
-                XElement xMySection = xDefaultSection.Element(namespaceName);
                 if (xMySection == null)
                 {
-                    Log.Write("Warning: {0}: Application defaults Section({1}}) not found", namespaceName, classInstance.GetType().Name);
                     //
                     // Upgrade the file, by adding the missing section
                     //
+                    if (xDocument == null)
+                        xDocument = XmlSettingsParsing.CreateXmlDocument(DefaultXmlSectionName);
+                    xDefaultSection = xDocument.Root.Element(DefaultXmlSectionName);
                     xDefaultSection.Add(AddLoggingElements(classInstance, version));
-                    xMySection = xDefaultSection.Element(namespaceName);
-                    xDocument.Save(sourceFile);
+                    xMySection = xDefaultSection.Element(nameSpaceName);
+                    try
+                    {
+                        xDocument.Save(sourceFile);
+                    }
+                    catch (Exception exception)
+                    {
+                        // Standard user will not be able to overwrite the corrupted file in the application folder.
+                        Write(exception, "LoadAppDefaults Element({0}.{1}): File create failed: {2}", nameSpaceName, classInstance.GetType().Name, sourceFile);
+                    }
                 }
+
                 int errors = XmlSettingsParsing.LoadClassValues(xMySection, classInstance, version);
                 if (errors != 0)
                 {
-                    Log.Write("Warning: {0}: Application defaults Section({1}) Errors({2}), overwriting section", namespaceName, classInstance.GetType().Name, errors);
+                    Write(LogPriority.Warning, "LoadAppDefaults Element({0}.{1}) Load Errors({2}), overwriting section: {3}", nameSpaceName, classInstance.GetType().Name, errors, sourceFile);
                     xMySection.Remove();
                     xDefaultSection.Add(AddLoggingElements(classInstance, version));
                     xDocument.Save(sourceFile);
@@ -151,11 +146,10 @@
             catch (Exception exception)
             {
                 // Only useful for program debugging during development
-                Log.Write(exception, "Error: CsTool.Logger: Failed to load/save application defaults from settings file.");
+                Write(exception, "LoadAppDefaults Element({0}.{1}): File create failed: {2}", nameSpaceName, classInstance.GetType().Name, sourceFile);
                 return false;
             }
             return true;
         }
-
     }
 }

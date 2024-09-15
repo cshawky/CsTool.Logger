@@ -104,19 +104,6 @@ namespace CsTool.Logger
             lock (padLockProperties)
             {
                 //
-                // Select the initial log file location. It must be writeable and not a reserved folder.
-                //
-                if ( !LoadAppDefaults(this) )
-                {
-                    // TODO Upgrade the application defaults file
-                }
-
-                //
-                // Create the message FIFO queue
-                //
-                bc = new BlockingCollection<QueuedMessage>(MaximumLogQueueSize);
-
-                //
                 // Initialise the filename pre pended text since the pre pended text is provided.
                 //
                 if ( !newFilePrependText.IsNullOrWhiteSpace() )
@@ -125,6 +112,16 @@ namespace CsTool.Logger
                 enableUserNamePrepend = enableUserName;
                 if (fileNameDateTime != null )
                     FileNameDateFilter = fileNameDateTime;
+
+                //
+                // Create the message FIFO queue
+                //
+                bc = new BlockingCollection<QueuedMessage>(MaximumLogQueueSize);
+
+                //
+                // Load logger settings which includes identifying the log file path.
+                //
+                LoadAppDefaults(this);
 
                 //
                 // Create the log file name
@@ -246,10 +243,7 @@ namespace CsTool.Logger
                 if (streamWriter != null && !IsSyncDue)
                 {
                     IsSyncDue = true;
-                    if (bc.Count == 0)
-                    {
-                        Logger.Instance.LogCommand(LogCommandAction.Flush);
-                    }
+                    Logger.Instance.LogCommand(LogCommandAction.Flush);
                 }
             }
         }
@@ -407,7 +401,7 @@ namespace CsTool.Logger
                 //if (append) 
                     fileMode = FileMode.Append;
 
-                Stream _outputStream = System.IO.File.Open(FullLogFileName, fileMode, FileAccess.Write, FileShare.Read);
+                _outputStream = System.IO.File.Open(FullLogFileName, fileMode, FileAccess.Write, FileShare.Read);
 
                 IsFileNameChangePending = false;
                 FullLogFileNameOpen = FullLogFileName;

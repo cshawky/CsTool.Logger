@@ -244,7 +244,7 @@ namespace CsTool.Logger
         /// <summary>
         /// Underlying output stream (file) for the <code>streamWriter</code>
         /// </summary>
-        Stream _outputStream;
+        private FileStream _outputStream;
 
         /// <summary>
         /// File stream writer

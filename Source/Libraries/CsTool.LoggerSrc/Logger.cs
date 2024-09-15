@@ -296,7 +296,7 @@ namespace CsTool.Logger
         public static string GetAppDefaultsFileName() => LogBase.GetAppDefaultsFileName();
 
         /// <summary>
-        /// Add the configuration properties to your application defaults file.
+        /// AddProperty the configuration properties to your application defaults file.
         /// Create an XElement <Namespace></Namespace> with the settings defined in classInstance.
         /// </summary>
         /// <returns>The created XElement</returns>

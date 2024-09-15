@@ -51,7 +51,7 @@ namespace CsTool.Logger
         /// </summary>
         /// <param name="formattedMessage">String formatted message</param>
         /// <param name="args">Arguments for the formatted message</param>
-        private static void WriteIt(string formattedMessage, params object[] args)
+        private static void WriteIt(LogPriority logPriority, string formattedMessage, params object[] args)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace CsTool.Logger
                     // can be runtime configurable.
                     formattedMessage = string.Format(formattedMessage, args);
                 }
-                string message = string.Format("{0:HH:mm:ss.fff}: {1}\n", date, formattedMessage);
+                string message = string.Format("{0:HH:mm:ss.fff}: {1}: {2}\n", date, logPriority.ToString(), formattedMessage);
                 File.AppendAllText(fullFileName, message);
             }
             catch { }
@@ -88,9 +88,18 @@ namespace CsTool.Logger
         /// <param name="args">formatted message arguments</param>
         public static void Write(string formattedMessage, params object[] args)
         {
-            WriteIt(formattedMessage, args);
+            WriteIt(LogPriority.Info, formattedMessage, args);
         }
 
+        /// <summary>
+        /// Log a message
+        /// </summary>
+        /// <param name="formattedMessage">String formatted message</param>
+        /// <param name="args">formatted message arguments</param>
+        public static void Write(LogPriority logPriority, string formattedMessage, params object[] args)
+        {
+            WriteIt(logPriority, formattedMessage, args);
+        }
         /// <summary>
         /// Log an exception message
         /// </summary>
@@ -105,7 +114,7 @@ namespace CsTool.Logger
                             "\n  Line: ", exception.Source,
                             "\n  StackTrace: ", exception.StackTrace);
 
-            WriteIt(errorMessage, args);
+            WriteIt(LogPriority.ErrorCritical, errorMessage, args);
         }
     }
 }

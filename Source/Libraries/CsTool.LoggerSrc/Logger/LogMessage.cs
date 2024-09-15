@@ -297,7 +297,7 @@ namespace CsTool.Logger
             TryAdd(p);
         }
 
-#if DEBUG
+#if DEBUG_QUEUE
         public bool IsQueueAsyncEnabled { get; set; }
 
         private Stopwatch stopwatch = new Stopwatch();

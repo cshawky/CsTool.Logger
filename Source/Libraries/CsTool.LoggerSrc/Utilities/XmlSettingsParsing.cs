@@ -81,7 +81,7 @@
         ///     </StringList>
         /// </code>
         /// </remarks>
-        public static bool Add(ref XElement xmlTree, string propertyName, object propertyValue, string version)
+        public static bool AddProperty(ref XElement xmlTree, string propertyName, object propertyValue, string version)
         {
             if (xmlTree == null)
                 return false;
@@ -151,7 +151,7 @@
                         foreach (object element in propertyValueList)
                         {
                             // select value from propertyValueList
-                            Add(ref xList, propertyName, element, version);
+                            AddProperty(ref xList, propertyName, element, version);
                         }
                         xmlTree.Add(xList);
                         return true;
@@ -170,11 +170,11 @@
                 {
                     case "String":
                         string elementValue = MyUtilities.InsertEnvironmentVariables(propertyValue as string);
-                        xmlTree.Add(new XElement(propertyName, elementValue, version));
+                        xmlTree.Add(new XElement(propertyName, elementValue));
                         break;
                     default:
                         elementValue = propertyValue.ToString();
-                        xmlTree.Add(new XElement(propertyName, elementValue, version));
+                        xmlTree.Add(new XElement(propertyName, elementValue));
                         break;
                 }
                 return true;
@@ -187,7 +187,7 @@
         }
 
         /// <summary>
-        /// Add all properties from a class instance that are marked with the ModelSettingsProperty Attribute to the XElement.
+        /// AddProperty all properties from a class instance that are marked with the ModelSettingsProperty Attribute to the XElement.
         /// </summary>
         /// <param name="xmlElementGroupName">The name of the XElement group that the properties will be added to</param>
         /// <param name="classInstance">The Class Instance to extract properties from</param>
@@ -275,7 +275,7 @@
                         {
                             value = MyUtilities.InsertEnvironmentVariables(value as string);
                         }
-                        Add(ref xmlSection, property.Name, value, version);
+                        AddProperty(ref xmlSection, property.Name, value, version);
                     }
                     catch (Exception exception)
                     {
@@ -465,7 +465,7 @@
             }
             catch (Exception exception)
             {
-                Log.Write(exception, "Error: CsTool.Logger: Failed to extract propertyValue {0} from settings file.", propertyInfo.Name);
+                Log.Write(exception, "Error: CsTool.Logger: Failed to extract property({0}) from settings file.", propertyInfo.Name);
                 errors++;
             }
             return result;
