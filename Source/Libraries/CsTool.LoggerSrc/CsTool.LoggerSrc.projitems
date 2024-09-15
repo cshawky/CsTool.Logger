@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods\Extensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Model\ModelSettingsAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\ModelSettingsAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Model\SampleModelSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILogBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\Log.cs" />

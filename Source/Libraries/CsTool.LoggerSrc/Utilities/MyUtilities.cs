@@ -32,7 +32,8 @@
         public static string[] SupportedEnvironmentVariables = new string[] { "%TEMP%", "%TMP%", "%LOCALAPPDATA%", "%OneDrive%", "%USERPROFILE%",
                                                                             "%APPDATA%", "%PUBLIC%",
                                                                             "%ProgramData%", "%ALLUSERSPROFILE%", "%ProgramFiles(x86)%", "%ProgramFiles%",
-                                                                            "%STARTUPDIR%", "%USERNAME%", "%COMPUTERNAME%" };
+                                                                            "%STARTUPDIR%", "%USERNAME%", "%COMPUTERNAME%",
+                                                                            "%APPNAME%"};
 
         /// <summary>
         /// Insert environment variable names and special internal variables in place of their respective path text.
@@ -56,15 +57,20 @@
                 if (variable == CurrentDirectoryEnvVar)
                 {
                     expandedVariable = Environment.CurrentDirectory;
+                    compactedPath = compactedPath.Replace(Environment.CurrentDirectory, CurrentDirectoryEnvVar);
+                    continue;
                 }
-                else
+                if (variable == "%APPNAME%")
                 {
-                    // Replace the destination path as it applies to an environment variable with the individual variable
-                    expandedVariable = Environment.ExpandEnvironmentVariables(variable);
+                    expandedVariable = LogUtilities.MyProcessName;
+                    compactedPath = compactedPath.Replace(expandedVariable, variable);
+                    continue;
                 }
+
+                // Replace the destination path as it applies to an environment variable with the individual variable
+                expandedVariable = Environment.ExpandEnvironmentVariables(variable);
                 compactedPath = compactedPath.Replace(expandedVariable, variable);
             }
-            compactedPath = compactedPath.Replace(Environment.CurrentDirectory, CurrentDirectoryEnvVar);
             return compactedPath;
         }
 

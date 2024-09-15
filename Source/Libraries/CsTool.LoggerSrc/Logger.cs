@@ -175,11 +175,8 @@ namespace CsTool.Logger
         //
         // These methods are the latest implementations: Refer to class iLogBase for minimum interfaces.
         //
-        // TODO Put method and properties summaries here for intellicode
-        //
-
         public static void Close() => Instance.CloseAndFlush();
-        public static void CloseAndFlush() => Instance.CloseAndFlush();
+        public static void CloseAndFlush(int maxWaitTime = 0, string closeReason = null) => Instance.CloseAndFlush(maxWaitTime, closeReason);
         public static string ConstructExceptionMessage(Exception exception, string simpleMessage) => Instance.ConstructExceptionMessage(exception, simpleMessage);
         public static void DisplayLogFile() => Instance.DisplayLogFile();
         public static bool IsLogPriorityEnabled(LogPriority priority) => Instance.IsLogPriorityEnabled(priority);
@@ -296,14 +293,14 @@ namespace CsTool.Logger
         /// to define the correct file name. This enables application specific logging settings.
         /// </summary>
         /// <returns>The Filename and extension for the defaults xml file</returns>
-        public static string GetApplicationDefaultsFileName() => LogBase.GetApplicationDefaultsFileName();
+        public static string GetAppDefaultsFileName() => LogBase.GetAppDefaultsFileName();
 
         /// <summary>
-        /// Add the logging configuration properties to your application defaults file.
-        /// Create an XElement <CsTool.Logger></CsTool.Logger> with the default logging settings.
+        /// Add the configuration properties to your application defaults file.
+        /// Create an XElement <Namespace></Namespace> with the settings defined in classInstance.
         /// </summary>
         /// <returns>The created XElement</returns>
-        public static XElement AddLoggingElements() => Instance.AddLoggingElements();
+        public static XElement AddLoggingElements(object classInstance = null) => Instance.AddLoggingElements(classInstance);
 
         #endregion Configuration File Interface Methods
     }

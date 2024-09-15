@@ -34,7 +34,7 @@ namespace CsTool.Logger
         //
         // CsTool.CoreUtilities.Logger Interfaces. 
         //
-        void CloseAndFlush(string closeReason = null);
+        void CloseAndFlush(int waitTime = 0, string closeReason = null);
         void DisplayLogFile();
         bool IsLogPriorityEnabled(LogPriority priority);
         void Write(string messageFormat, params object[] args);

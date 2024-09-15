@@ -20,7 +20,7 @@ namespace CsTool.Logger
     /// <remarks>Refer to <code>LogBase</code> for a better explanation
     /// 
     /// <code>LogBaseProperties</code> may be tailored at start up by the application defaults xml file. Thus initial default
-    /// values are set in class <code>ApplicationDefaults</code> and not here.
+    /// values are set in class <code>AppDefaults</code> and not here.
     /// </remarks>
     [ModelSettingsClass]
     public partial class LogBase : ILogBase
@@ -83,7 +83,7 @@ namespace CsTool.Logger
         /// Absolute  directory to put the log files.
         /// <code>SetLogDirectory</code> ensures the path is writeable and not "reserved".
         /// </summary>
-        [ModelSettingsProperty]
+        [ModelSettingsPropertyWithSubstitutions]
         public string LogFilePath
         {
             get
@@ -126,9 +126,14 @@ namespace CsTool.Logger
         [ModelSettingsProperty]
         public DebugThresholdLevel LogThresholdMaxLevel { get; set; } = DebugThresholdLevel.LogInfo;
 
+#if TEST_NEW_MODEL_SETTINGS
+        /// <summary>   
+        /// Development testing of the new ModelSettings feature makign use of Attributes to automatically add properties
+        /// to the settings file.
+        /// </summary>
         [ModelSettingsInstance]
         public SampleModelSettings SampleSettings { get; set; } = new SampleModelSettings();
-
+#endif // TEST_NEW_MODEL_SETTINGS
         #endregion ModelSettings Properties
 
         //
@@ -254,6 +259,9 @@ namespace CsTool.Logger
 
         #endregion PropertiesFile
 
+        //
+        // -----------------------------------------------------------------------------------------
+        //
         #region Properties
 
         public int LogQueueCount
@@ -274,7 +282,7 @@ namespace CsTool.Logger
         /// <summary>
         /// Allows for tidy indentation of multi line log messages from this class.
         /// </summary>
-        public const string LogLineIndent = "                ";
+        public const string LogLineIndent = "                  ";
 
         /// <summary>
         /// Allows for tidy indentation of multi line log messages from this class.

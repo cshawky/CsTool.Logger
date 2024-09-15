@@ -1,4 +1,4 @@
-﻿namespace CsTool.Logger.Model
+﻿namespace CsTool.Logger
 {
     using System;
     using System.Collections.Generic;
@@ -32,7 +32,7 @@
     ///                             
     /// Please refer to the class <code>SampleModelSettings</code> for an example of how to use these attributes.
     /// </remarks>
-        [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class)]
     public class ModelSettingsClassAttribute : Attribute
     {
     }
@@ -58,6 +58,19 @@
     public class ModelSettingsPropertyAttribute : Attribute
     {
         public ModelSettingsPropertyAttribute()
+        {
+        }
+    }
+
+    /// <summary>
+    /// Then the <code>ModelSettingsVariableSubstitution</code> attribute is assigned to a property variable substitution will be
+    /// performed on load and save.
+    /// Use this attribute instead of <code>ModelSettingsProperty</code>.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class ModelSettingsPropertyWithSubstitutionsAttribute : Attribute
+    {
+        public ModelSettingsPropertyWithSubstitutionsAttribute()
         {
         }
     }

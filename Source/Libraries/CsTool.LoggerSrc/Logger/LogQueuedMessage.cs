@@ -56,7 +56,8 @@ namespace CsTool.Logger
                         }
                         catch (Exception exception)
                         {
-                            p.Msg += ConstructExceptionMessage(exception, "LogMessage formatting error");
+                            string msg = String.Format("LogMessage formatting error in \nMsg[{0}], ArgC[{1}]", p.Msg, p.Args.Length);
+                            p.Msg = ConstructExceptionMessage(exception, msg);
                         }
                     }
                     try
@@ -161,7 +162,7 @@ namespace CsTool.Logger
         /// </summary>
         private void BackupLogFiles()
         {
-            CloseAndFlush();
+            CloseAndFlush(0);
             lock (padLockFileObjects)
             {
                 // Grab the latest file name as we don't rename old log files if the name has changed

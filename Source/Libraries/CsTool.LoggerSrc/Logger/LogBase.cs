@@ -106,7 +106,10 @@ namespace CsTool.Logger
                 //
                 // Select the initial log file location. It must be writeable and not a reserved folder.
                 //
-                LoadApplicationDefaults();
+                if ( !LoadAppDefaults(this) )
+                {
+                    // TODO Upgrade the application defaults file
+                }
 
                 //
                 // Create the message FIFO queue
@@ -229,6 +232,7 @@ namespace CsTool.Logger
         /// <summary>
         /// Background timer action to flush the log file to disk if it has been written to since
         /// the last flush.
+        /// TODO Not sure if this is relevant anymore.
         /// </summary>
         /// <param name="source">NA</param>
         /// <param name="e">NA</param>
@@ -284,7 +288,7 @@ namespace CsTool.Logger
         /// Close the log file if it is open.
         /// </summary>
         /// <param name="closeReason">A non empty string will generate a log entry indicating the log file was closed.</param>
-        public void CloseAndFlush(string closeReason = null)
+        public void CloseAndFlush(int maxWaitTime = 0, string closeReason = null)
         {
             lock (padLockFileObjects)
             {
@@ -293,6 +297,22 @@ namespace CsTool.Logger
                 {
                     if (streamWriter != null )
                     {
+                        if ( maxWaitTime > 0 && bc.Count > 0 )
+                        {
+                            int wait = Math.Max(200,Math.Min(20, maxWaitTime / 10));
+                            int totalWait = 0;
+                            Log.Write("CloseAndFlush: Waiting for {0} messages to be flushed", bc.Count);
+                            while (bc.Count > 0 && totalWait < maxWaitTime)
+                            {
+                                Thread.Sleep(wait);
+                                totalWait += wait;
+                            }
+                            if (bc.Count > 0)
+                            {
+                                Log.Write("CloseAndFlush: Unexpected {0} messages still pending for flush, not waiting...", bc.Count);
+                            }
+                        }
+
                         streamWriter.Flush();
                         streamWriter.Dispose();
                         streamWriter = null;
@@ -321,7 +341,7 @@ namespace CsTool.Logger
             {
                 if (!File.Exists(FullLogFileName))
                     Logger.Write(LogPriority.Info, "DisplayLogFile called before any logging has occurred");
-                CloseAndFlush();
+                CloseAndFlush(1000);
                 Process.Start(FullLogFileName);
             }
             catch ( Exception exception ) {
@@ -373,7 +393,7 @@ namespace CsTool.Logger
         {
             lock (padLockFileObjects)
             {
-                this.CloseAndFlush(newFileReason);
+                this.CloseAndFlush(0, newFileReason);
 
                 LogFileName = CreateLogFileName();
 

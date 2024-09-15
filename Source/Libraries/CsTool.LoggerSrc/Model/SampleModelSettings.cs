@@ -33,7 +33,7 @@
     /// which currently resides in CsTool.CoreUtilities.
     /// TODO incorporate the equivalent of DefaultSettings class into CsTool.Logger so that this architecture
     /// will work independent to CoreUtilities. In this interim migration, the settings are handled through
-    /// <code>ApplicationDefaults</code> class. As may be seen, that class re introduces methods from CoreUtilities
+    /// <code>AppDefaults</code> class. As may be seen, that class re introduces methods from CoreUtilities
     /// uplifting them to utilise System.Reflection more extensively.
     /// 
     /// The code would be something like:
@@ -44,7 +44,7 @@
     /// <code>
     ///  <?xml...?>
     ///  <Settings version="x.y.x"...>
-    ///     <ApplicationDefaults|DLL Name>
+    ///     <AppDefaults|DLL Name>
     ///         <SampleSettings1 class="SampleModelSettings" lastsaved="date time">
     ///             <StandardString>Standard Value</StandardString>
     ///             <StandardInt>42</StandardInt>
@@ -77,7 +77,7 @@
     ///             </AnotherSetting>
     ///         </SampleSettings1>
     ///     
-    ///     </ApplicationDefaults>
+    ///     </AppDefaults>
     ///  </Settings>
     /// </code>
     /// 
