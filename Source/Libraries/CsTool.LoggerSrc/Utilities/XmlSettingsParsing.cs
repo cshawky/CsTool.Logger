@@ -8,7 +8,9 @@
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Net.Mime;
     using System.Reflection;
+    using System.Windows.Forms;
     using System.Xml.Linq;
     using ExtensionMethods;
     using Model;
@@ -33,17 +35,26 @@
         /// <param name="defaultSectionName">The name of the first section to add to the settings file.
         /// For the application defaults file this would be DefaultXmlSectionName = "AppDefaults".</param>
         /// <returns>The empty XmlDocument, ready to add settings groups to</returns>
-        public static XDocument CreateXmlDocument(string defaultSectionName)
+        public static XDocument CreateXmlDocument(string defaultSectionName, string nameSpace)
         {
             XDocument xDocument = null;
+            XElement xRoot = null;
+            XElement xDefaultSection = null;
+            XElement xNamespace = null;
             try
             {
                 xDocument = new XDocument(new XDeclaration("1.0", "utf-8", "yes"));
-                XElement xRoot = new XElement("Settings"
+                xRoot = new XElement("Settings"
                     , new XAttribute("version", XmlSettingsDocumentVersion)
                     , new XAttribute("lastsaved", DateTimeOffset.Now.ToString()));
                 xRoot.Add(new XElement(defaultSectionName));
                 xDocument.Add(xRoot);
+                xDefaultSection = xDocument.Root.Element(defaultSectionName);
+                if (!string.IsNullOrWhiteSpace(nameSpace))
+                {
+                    xNamespace = new XElement(nameSpace);
+                    xDefaultSection.Add(xNamespace);
+                }
             }
             catch (Exception exception)
             {
@@ -86,12 +97,16 @@
             if (xmlTree == null)
                 return false;
 
-            if (propertyName.IsNullOrWhiteSpace())
+            if (string.IsNullOrWhiteSpace(propertyName))
                 return false;
 
             if (propertyValue == null)
                 propertyValue = String.Empty;
 
+            if (propertyName == "MyLogger" || propertyName == "SampleSettings")
+            {
+                Logger.Write("Warning: CsTool.Logger.AddProperty: Property({0}) is not supported", propertyName);
+            }
             try
             {
                 Type type = propertyValue?.GetType();
@@ -102,8 +117,9 @@
                 if (type.IsClass)
                 {
                     // get attributes from class
-                    var modelSettingsAttribute = propertyValue.GetType().GetCustomAttribute<ModelSettingsClassAttribute>();
-                    if (modelSettingsAttribute != null)
+                    var modelSettingsAttribute1 = propertyValue.GetType().GetCustomAttribute<ModelSettingsClassAttribute>();
+                    var modelSettingsAttribute2 = propertyValue.GetType().GetCustomAttribute<ModelSettingsInstanceAttribute>();
+                    if (modelSettingsAttribute1 != null || modelSettingsAttribute2 != null)
                     {
                         // Create child XElement containing all properties of this class instance
                         XElement xList = AddClass(propertyName, propertyValue, version);
@@ -187,11 +203,8 @@
         }
 
         /// <summary>
-        /// AddProperty all properties from a class instance that are marked with the ModelSettingsProperty Attribute to the XElement.
+        /// Add all properties from a class instance that are marked with the ModelSettingsProperty Attribute to the XElement.
         /// </summary>
-        /// <param name="xmlElementGroupName">The name of the XElement group that the properties will be added to</param>
-        /// <param name="classInstance">The Class Instance to extract properties from</param>
-        /// <returns>Returns an XElement containing all properties with the [ModelSettings*] attributes, null if no properties are exposed.</returns>
         /// <remarks>
         /// Usage:
         ///     MySettingsClass mySettings = new MySettingsClass();
@@ -228,24 +241,45 @@
         ///         public string[] InfoList2 { get; set; } = { "Value4", "Value5", "Value6" };
         ///     }
         ///
+        /// Example XElement produced:
+        /// 
+        /// <CsTool.Logger>
+        ///     <LogBase version="1.0.0" lastsaved="28/09/2024 4:12:56 PM +10:00">
+        ///         <CountLoggedMessagesMaximum>100000</CountLoggedMessagesMaximum>
+        ///         <CountOldLogFilesToKeep>20</CountOldLogFilesToKeep>
+        ///         <FileNameDateFilter></FileNameDateFilter>
+        ///         <IsConsoleLoggingEnabled>False</IsConsoleLoggingEnabled>
+        ///         <IsLoseMessageOnBufferFull>False</IsLoseMessageOnBufferFull>
+        ///         <IsShowMessagesEnabledByDefault>True</IsShowMessagesEnabledByDefault>
+        ///         <LogFilePath>%STARTUPDIR%\Logs</LogFilePath>
+        ///         <LogThresholdMaxLevel-Help usage = "LogFatal LogImportantInfo LogCritical LogError LogWarning LogInfo LogDebug LogVerbose" />
+        ///         < LogThresholdMaxLevel > LogInfo </ LogThresholdMaxLevel >
+        ///     </LogBase>
+        /// </ CsTool.Logger >
+        /// 
         /// </code>
         /// </remarks>
+        /// <param name="xmlElementGroupName">Optional. The name of the XElement group that the properties will be added to.
+        /// If null the Class Name will be used</param>
+        /// <param name="classInstance">The Class Instance to extract properties from</param>
+        /// <param name="version">The version of this settings file section</param>
+        /// <returns>Returns an XElement containing all properties with the [ModelSettings*] attributes, null if no properties are exposed.</returns>
         public static XElement AddClass(string xmlElementGroupName, object classInstance, string version)
         {
-            if (xmlElementGroupName.IsNullOrWhiteSpace())
-                return null;
-
             if (classInstance == null)
                 return null;
 
             Type logBasePropertiesType = classInstance.GetType();
             string typeName = classInstance.GetType().Name;
+            if (string.IsNullOrWhiteSpace(xmlElementGroupName))
+                xmlElementGroupName = typeName;
 
             XElement xmlSection = new XElement(xmlElementGroupName
-                , new XAttribute("class", typeName)
-                , new XAttribute("version", version)
-                , new XAttribute("lastsaved", DateTimeOffset.Now.ToString())
-                );
+                                    , new XAttribute("class", typeName)
+                                    /*, new XAttribute("name", "")*/
+                                    , new XAttribute("version", version)
+                                    , new XAttribute("lastsaved", DateTimeOffset.Now.ToString())
+                                    );
             try
             {
                 //
@@ -275,6 +309,10 @@
                         {
                             value = MyUtilities.InsertEnvironmentVariables(value as string);
                         }
+                        //if ( property.Name == "Name" && value.ToString().Length > 0)
+                        //{
+                        //    xmlSection.SetAttributeValue("name", value);
+                        //}
                         AddProperty(ref xmlSection, property.Name, value, version);
                     }
                     catch (Exception exception)
@@ -322,8 +360,10 @@
                 PropertyInfo[] properties = logBasePropertiesType.GetProperties();
                 foreach (PropertyInfo property in properties)
                 {
-                    // Only include properties that are read/write and not null, public and ModelSettingsPropertyAttribute
-                    if (property.PropertyType.IsPublic && property.CanWrite
+                    if (!property.PropertyType.IsPublic) continue;
+
+                    // Only include properties that are read/write and not null, public and ModelSettings*Attribute
+                    if (property.CanWrite
                         && (
                             property.GetCustomAttribute<ModelSettingsPropertyAttribute>() != null
                             || property.GetCustomAttribute<ModelSettingsPropertyWithSubstitutionsAttribute>() != null
@@ -361,7 +401,8 @@
                                     newValue = GetPropertyAsType(settingsSection, property, classInstance, ref errors);
                                     if (property.GetCustomAttribute<ModelSettingsPropertyWithSubstitutionsAttribute>() != null)
                                     {
-                                        newValue = MyUtilities.InsertEnvironmentVariables(newValue as string);
+                                        // Replace environment variables with current values
+                                        newValue = MyUtilities.ExpandEnvironmentVariables(newValue as string);
                                     }
                                     break;
                                 default:
@@ -376,13 +417,8 @@
                             errors++;
                             Log.Write(exception, "Error: CsTool.Logger.LoadClassValues({0}): Property({1}) exception", typeName, property.Name);
                         }
+                        continue;
                     }
-                }
-                //
-                // Update all of the propertyInfo class instances of interest from the XElement(i.e. file)
-                //
-                foreach (PropertyInfo property in properties)
-                {
                     // Looking for ModelSettingsClass instances to process
                     if (property.PropertyType.IsPublic && property.GetCustomAttribute<ModelSettingsInstanceAttribute>() != null)
                     {
@@ -392,6 +428,7 @@
                             if (xmlSubSection == null)
                             {
                                 Log.Write("Warning: CsTool.Logger.LoadClassValues: Class({0}) properties not found in settings file", property.Name);
+                                errors++;
                                 continue;
                             }
                             int subErrors = LoadClassValues(xmlSubSection, property.GetValue(classInstance), version);
@@ -406,9 +443,9 @@
                             errors++;
                             Log.Write(exception, "Error: CsTool.Logger.LoadClassValues({0}): Property({1}) exception", typeName, property.Name);
                         }
+                        continue;
                     }
                 }
-
             }
             catch (Exception exception)
             {

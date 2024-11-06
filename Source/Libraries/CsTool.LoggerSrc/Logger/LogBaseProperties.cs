@@ -30,6 +30,9 @@ namespace CsTool.Logger
         //
         #region ModelSettings Properties
 
+        [ModelSettingsProperty]
+        public bool IsConsoleLoggingEnabled { get; set; } = false;
+
         /// <summary>
         /// Maximum number of queued messages before messages are lost or logging is blocked.
         /// TODO: No point allowing this setting to change because the queue is already created
@@ -128,7 +131,7 @@ namespace CsTool.Logger
 
 #if TEST_NEW_MODEL_SETTINGS
         /// <summary>   
-        /// Development testing of the new ModelSettings feature makign use of Attributes to automatically add properties
+        /// Development testing of the new ModelSettings feature making use of Attributes to automatically add properties
         /// to the settings file.
         /// </summary>
         [ModelSettingsInstance]

@@ -183,7 +183,7 @@ namespace CsTool.Logger
             //
             // Preferred path if not specified is the startup path
             //
-            if (path.IsNullOrWhiteSpace())
+            if (string.IsNullOrWhiteSpace(path))
                 path = MyStartupPath;
             //Log.Write("GetWriteablePath: Check path {0}", path);
 
@@ -249,7 +249,7 @@ namespace CsTool.Logger
 
             string extension = Path.GetExtension(fullFileName);
 
-            if (optionalExtension.IsNullOrWhiteSpace())
+            if (string.IsNullOrWhiteSpace(optionalExtension))
                 optionalExtension = System.String.Empty;
             else
             {

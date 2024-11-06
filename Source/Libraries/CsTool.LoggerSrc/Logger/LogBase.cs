@@ -104,24 +104,33 @@ namespace CsTool.Logger
             lock (padLockProperties)
             {
                 //
-                // Initialise the filename pre pended text since the pre pended text is provided.
+                // Create the message FIFO queue.
                 //
-                if ( !newFilePrependText.IsNullOrWhiteSpace() )
+                bc = new BlockingCollection<QueuedMessage>(MaximumLogQueueSize);
+
+                //
+                // Logger messages may now be queued.
+                //
+
+                // Ensure all unhandled exceptions are logged
+                if (!isExceptionHandlerRegistered)
+                    AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(LogUnhandledException);
+                isExceptionHandlerRegistered = true;
+
+                //
+                // Load logger settings which includes identifying the log file path.
+                //
+                LoadAppDefaults(this, "1.0.0");
+
+                //
+                // Initialise the custom logger settings. This only happens when the user app creates an additional logger.
+                //
+                if ( !string.IsNullOrWhiteSpace(newFilePrependText) )
                     filePrepend = newFilePrependText;
 
                 enableUserNamePrepend = enableUserName;
                 if (fileNameDateTime != null )
                     FileNameDateFilter = fileNameDateTime;
-
-                //
-                // Create the message FIFO queue
-                //
-                bc = new BlockingCollection<QueuedMessage>(MaximumLogQueueSize);
-
-                //
-                // Load logger settings which includes identifying the log file path.
-                //
-                LoadAppDefaults(this);
 
                 //
                 // Create the log file name
@@ -150,29 +159,39 @@ namespace CsTool.Logger
             ConsumeMessages();
 
             //
-            // Setup a timed file flush action
+            // Setup a timed file flush action. This should not really be needed.
             //
             timer = new System.Timers.Timer(2000);
             timer.Elapsed += OnTimedEvent;
             timer.AutoReset = true;
             timer.Enabled = true;
+
+            // Subscribe to the AppDomain.ProcessExit event. most important step to ensure all messages are saved on exit.
+            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
         }
 
         /// <summary>
-        /// Destructor for class <code>Logger</code>
+        /// Destructor for class <code>Logger</code>. Using AppDomain.CurrentDomain.ProcessExit event ensures that the log file is closed.
         /// </summary>
-        ~LogBase()
-        {
-            Dispose();
-        }
-
-        /// <summary>
-        /// Dispose managed and unmanaged resources
-        /// </summary>
-        public void Dispose()
+        /// <param name="sender">Not used</param>
+        /// <param name="e">not used</param>
+        private void OnProcessExit(object sender, EventArgs e)
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
+        }
+
+
+        private bool isExceptionHandlerRegistered = false;
+
+        /// <summary>
+        /// Log unhandled exceptions to the log file.
+        /// </summary>
+        /// <param name="sender">Sender</param>
+        /// <param name="e">Exception object</param>
+        private void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception exception = e.ExceptionObject as Exception;
+            Logger.Write(exception, "LogUnhandledException");
         }
 
         /// <summary>
@@ -182,47 +201,66 @@ namespace CsTool.Logger
         /// <param name="disposed">Boolean to indicate finalisation</param>
         protected virtual void Dispose(bool disposed)
         {
-            isShutDownActive = true;
-            isLogFileFirstOpen = false;
-            if (disposed)
+            if (isShutDownActive)
             {
-                if (bc != null)
+                // Should not get here but, just in case wait until the message queue bc is empty as another task is emptying it
+                Log.Write(LogPriority.ErrorCritical, "Dispose: We should not get here, waiting for queue to empty...");
+                while (bc.Count > 0) Thread.Sleep(100);
+                return;
+            }
+            lock (padLockProperties)
+            {
+                isShutDownActive = true;
+                isLogFileFirstOpen = false;
+                if (disposed)
                 {
-                    // Give time for the existing queue to be processed including any last minute logs from class destructors.
-                    // Catching this is not guaranteed.
-                    // NOTE: Reduce this time if "Logging stopped" is not completed in the log file.
-                    //Thread.Sleep(100);
-
-                    // Get rid of managed resources
-                    // Prevent new log messages from being added
-                    bc.CompleteAdding();
-                    // Flush the queue (the Factory Task has been killed by now)
-                    foreach (QueuedMessage p in bc.GetConsumingEnumerable())
+                    if (bc != null)
                     {
-                        LogQueuedMessage(p);
+                        // Give time for the existing queue to be processed including any last minute logs from class destructors.
+                        // Catching this is not guaranteed.
+                        // NOTE: Reduce this time if "Logging stopped" is not completed in the log file.
+                        //Thread.Sleep(100);
+
+                        // Get rid of managed resources
+                        // Prevent new log messages from being added
+                        bc.CompleteAdding();
+                        // Flush the queue (the Factory Task has been killed by now)
+                        foreach (QueuedMessage p in bc.GetConsumingEnumerable())
+                        {
+                            LogQueuedMessage(p);
+                        }
+                    }
+                    if (streamWriter == null || !streamWriter.BaseStream.CanWrite)
+                        CreateNewLogFile();
+                    streamWriter.Write(
+                        "\n============================== Logging stopped : {0:yyyy-MMM-dd ddd HH:mm:ss} : Shutdown requested =====================",
+                        DateTimeOffset.Now);
+                    CloseAndFlush();
+                    if (timer != null)
+                        timer.Dispose();
+                    if (bc != null)
+                    {
+                        bc.Dispose();
+                        bc = null;
                     }
                 }
-                if (streamWriter == null || !streamWriter.BaseStream.CanWrite)
-                    CreateNewLogFile();
-                streamWriter.Write(
-                    "\n============================== Logging stopped : {0:yyyy-MMM-dd ddd HH:mm:ss} : Shutdown requested =====================",
-                    DateTimeOffset.Now);
-                CloseAndFlush();
-                if (timer != null)
-                    timer.Dispose();
-                if (bc != null)
-                {
-                    bc.Dispose();
-                    bc = null;
-                }
-
             }
         }
 
-        private Object padLockShutdown = new Object();
-
+        /// <summary>
+        /// The timer for periodic file flushes.
+        /// </summary>
         private System.Timers.Timer timer;
+
+        /// <summary>
+        /// Raw timer counter to indicate when a flush was last performed.
+        /// </summary>
         private UInt64 TimerLastCount;
+
+        /// <summary>
+        /// Indicates that a file flush is due. This is used to prevent multiple flushes and allowing queuing of flushes
+        /// in the message queue.
+        /// </summary>
         private bool IsSyncDue { get; set; }
 
 
@@ -356,7 +394,7 @@ namespace CsTool.Logger
                 if (EnableUserNamePrepend)
                     prependName += "_" + Environment.UserName;
 
-                if (!FileNameDateFilter.IsNullOrWhiteSpace())
+                if (!string.IsNullOrWhiteSpace(FileNameDateFilter))
                 {
                     string dateText = DateTimeOffset.Now.ToString(FileNameDateFilter);
                     name = string.Format("{0}_{1}{2}", prependName, dateText, LogFileExtension);
@@ -451,7 +489,7 @@ namespace CsTool.Logger
         /// </remarks>
         public string SetLogDirectory(string preferredPath = null)
         {
-            if (preferredPath.IsNullOrWhiteSpace())
+            if (string.IsNullOrWhiteSpace(preferredPath))
             {
                 preferredPath = LogUtilities.MyStartupPath + @"\Logs";
             }

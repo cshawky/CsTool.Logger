@@ -13,27 +13,44 @@
 
     public static class MyUtilities
     {
-
         //
         // -----------------------------------------------------------------------------------------
         //
         #region Environment Variables Substitution
-
 
         /// <summary>
         /// Fake environment variable to represent the current directory. Supported by CsTool.CoreUtilities.Utilities.ExpandEnvironmentVariables()
         /// and InsertEnvironmentVariables(). CsTool.Logger needs the same methods but cannot call CoreUtilities. Therefore duplicated here.
         /// </summary>
         private const string CurrentDirectoryEnvVar = "%STARTUPDIR%";
+        private const string AppNameEnvVar = "%APPNAME%";
 
         /// <summary>
         /// Environment variables that can be substituted in file paths.
         /// </summary>
         public static string[] SupportedEnvironmentVariables = new string[] { "%TEMP%", "%TMP%", "%LOCALAPPDATA%", "%OneDrive%", "%USERPROFILE%",
                                                                             "%APPDATA%", "%PUBLIC%",
-                                                                            "%ProgramData%", "%ALLUSERSPROFILE%", "%ProgramFiles(x86)%", "%ProgramFiles%",
-                                                                            "%STARTUPDIR%", "%USERNAME%", "%COMPUTERNAME%",
-                                                                            "%APPNAME%"};
+                                                                            "%ProgramData%", "%ALLUSERSPROFILE%", 
+                                                                            "%ProgramFiles(x86)%", "%ProgramFiles%",
+                                                                            CurrentDirectoryEnvVar, "%USERNAME%", "%COMPUTERNAME%",
+                                                                            AppNameEnvVar};
+
+        /// <summary>
+        /// Replace all environment variables including the internal variable substitutions
+        /// with their current values.
+        /// The returned path is ideally suited for use with file methods.
+        /// </summary>
+        /// <param name="compactedPath">The file path with environment variables</param>
+        /// <returns>The file path with all environment variables replaced with current values</returns>
+        public static string ExpandEnvironmentVariables(string compactedPath)
+        {
+            string expandedPath = Environment.ExpandEnvironmentVariables(compactedPath);
+            expandedPath = expandedPath
+                            .Replace(CurrentDirectoryEnvVar, Environment.CurrentDirectory)
+                            .Replace(AppNameEnvVar, LogUtilities.MyProcessName);
+            //Logger.Write("ExpandEnvironmentVariables:\n   {0}\n-> {1}", compactedPath, expandedPath);
+            return expandedPath;
+        }
 
         /// <summary>
         /// Insert environment variable names and special internal variables in place of their respective path text.
@@ -49,28 +66,26 @@
         public static string InsertEnvironmentVariables(string expandedPath)
         {
             string compactedPath = expandedPath;
-            if (expandedPath.IsNullOrEmpty()) return expandedPath;
+            if (string.IsNullOrEmpty(expandedPath)) return expandedPath;
 
             foreach (string variable in SupportedEnvironmentVariables)
             {
-                string expandedVariable;
                 if (variable == CurrentDirectoryEnvVar)
                 {
-                    expandedVariable = Environment.CurrentDirectory;
                     compactedPath = compactedPath.Replace(Environment.CurrentDirectory, CurrentDirectoryEnvVar);
                     continue;
                 }
-                if (variable == "%APPNAME%")
+                if (variable == AppNameEnvVar)
                 {
-                    expandedVariable = LogUtilities.MyProcessName;
-                    compactedPath = compactedPath.Replace(expandedVariable, variable);
+                    compactedPath = compactedPath.Replace(LogUtilities.MyProcessName, variable);
                     continue;
                 }
-
                 // Replace the destination path as it applies to an environment variable with the individual variable
-                expandedVariable = Environment.ExpandEnvironmentVariables(variable);
+                string expandedVariable = Environment.ExpandEnvironmentVariables(variable);
                 compactedPath = compactedPath.Replace(expandedVariable, variable);
             }
+            //Logger.Write("InsertEnvironmentVariables:\n   {0}\n-> {1}", expandedPath, compactedPath);
+
             return compactedPath;
         }
 

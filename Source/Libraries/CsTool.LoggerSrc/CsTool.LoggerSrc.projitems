@@ -22,7 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logger\LogQueuedMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\QueuedMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LogUtilities.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Logger\ApplicationDefaults.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logger\AppDefaults.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MyUtilities.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\XmlSettingsParsing.cs" />
   </ItemGroup>

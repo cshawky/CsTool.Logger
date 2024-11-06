@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Text;
+    using CsTool.Logger;
 
     /// <summary>
     /// This is a bit of a story/history and the design dates back to 2012 with some overhang from C,C++ days of 2004.
@@ -44,7 +45,8 @@
     /// <code>
     ///  <?xml...?>
     ///  <Settings version="x.y.x"...>
-    ///     <AppDefaults|DLL Name>
+    ///     <AppDefaults>
+    ///       <NameSpace>
     ///         <SampleSettings1 class="SampleModelSettings" lastsaved="date time">
     ///             <StandardString>Standard Value</StandardString>
     ///             <StandardInt>42</StandardInt>
@@ -76,7 +78,7 @@
     ///                 </ ValueList2 >
     ///             </AnotherSetting>
     ///         </SampleSettings1>
-    ///     
+    ///       </NameSpace>
     ///     </AppDefaults>
     ///  </Settings>
     /// </code>

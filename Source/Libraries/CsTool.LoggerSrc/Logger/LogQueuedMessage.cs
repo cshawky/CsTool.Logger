@@ -99,6 +99,10 @@ namespace CsTool.Logger
                             IsSyncDue = false;
                         }
                         IncrementMessageCount(p.LPriority);
+                        if (IsConsoleLoggingEnabled)
+                        {
+                            Console.WriteLine(message);
+                        }
                     }
                     catch (Exception exception)
                     {

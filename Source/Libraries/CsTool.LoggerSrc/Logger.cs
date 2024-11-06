@@ -116,13 +116,6 @@ namespace CsTool.Logger
             throw new NotSupportedException("Do not use Logger class directly for instantiating individual loggers. Use class LogBase() instead.");
         }
 
-        /// <summary>
-        /// Destructor for class <code>LoggerSingleton</code>
-        /// </summary>
-        ~Logger()
-        {
-        }
-
         #endregion Initialisation
 
         //
@@ -148,6 +141,11 @@ namespace CsTool.Logger
         public static string FileNameDateFilter { get => Instance.FileNameDateFilter; set => Instance.FileNameDateFilter = value; }
 
         //public static int MaximumLogQueueSize { get => Instance.MaximumLogQueueSize; set => Instance.MaximumLogQueueSize = value; }
+
+        /// <summary>
+        /// Enable Console Logging, only useful for Framework Console applications
+        /// </summary>
+        public static bool IsConsoleLoggingEnabled { get => Instance.IsConsoleLoggingEnabled; set => Instance.IsConsoleLoggingEnabled = value; }
 
         public static bool IsLoseMessageOnBufferFull { get => Instance.IsLoseMessageOnBufferFull; set => Instance.IsLoseMessageOnBufferFull = value; }
 
@@ -296,11 +294,11 @@ namespace CsTool.Logger
         public static string GetAppDefaultsFileName() => LogBase.GetAppDefaultsFileName();
 
         /// <summary>
-        /// AddProperty the configuration properties to your application defaults file.
+        /// Add the configuration properties to your application defaults file.
         /// Create an XElement <Namespace></Namespace> with the settings defined in classInstance.
         /// </summary>
         /// <returns>The created XElement</returns>
-        public static XElement AddLoggingElements(object classInstance = null) => Instance.AddLoggingElements(classInstance);
+        public static XElement AddLoggingElements(object classInstance, string version = "1.0.0") => Instance.AddLoggingElements(classInstance, version);
 
         #endregion Configuration File Interface Methods
     }

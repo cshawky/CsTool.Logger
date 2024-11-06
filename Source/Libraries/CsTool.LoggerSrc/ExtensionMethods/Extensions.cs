@@ -7,6 +7,7 @@
 // -------------------------------------------------------------------------------------------------------------------------
 
 /// <summary>
+/// TODO Consider migrating CsTool.ExtensionMethods to CsTool.Logger.ExtensionMethods
 /// CsTool.Extensions namespace is tied to the new Logger interface and may supersede CsTool.ExtensionMethods.
 /// Use these extensions instead of CsTool.ExtensionMethods.
 /// CsTool.CoreUtilities has an expanded set of extensions in class <code>ExtensionMethods</code>.
@@ -20,9 +21,9 @@ namespace CsTool.Logger.ExtensionMethods
     /// </summary>
     public static class MyStringExtensions
     {
-      public static bool IsNullOrEmpty(this string str)
+        public static bool IsNullOrEmpty_Deprecated(this string str)
         {
-            return str == null || str == String.Empty || str[0] == '\0';
+            return string.IsNullOrEmpty(str);
         }
 
         /// <summary>
@@ -31,20 +32,9 @@ namespace CsTool.Logger.ExtensionMethods
         /// </summary>
         /// <param name="str">The string to check</param>
         /// <returns>True if the string is null or contains white space only.</returns>
-        public static bool IsNullOrWhiteSpace(this string str)
+        public static bool IsNullOrWhiteSpace_Deprecated(this string str)
         {
-            if (str == null) return true;
-            int len = str.Length;
-            if (len == 0) return true;
-            if (str[0] == '\0') return true;
-            for (int i = 0; i < len; i++)
-            {
-                if (str[i] == ' ') continue;
-                if (str[i] == '\t') continue;
-                if (str[i] == 0x09) continue;
-                return false;
-            }
-            return true;
+            return string.IsNullOrWhiteSpace(str);
         }
     }
 }

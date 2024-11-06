@@ -41,7 +41,8 @@
     /// The <code>ModelSettingsInstance</code> attribute is assigned to an instance of a class that contains properties
     /// for export/import to/from a ModelSettings xml file.
     /// Typical examples of this property would be a custom class like <code>SampleModelSettings</code> that contains
-    /// multiple ModelSettingsProperty tagged properties.
+    /// multiple ModelSettingsProperty tagged properties. Each instance of <code>SampleModelSettings</code> would be
+    /// tagged with this attribute.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class ModelSettingsInstanceAttribute : Attribute
