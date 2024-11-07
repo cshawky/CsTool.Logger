@@ -49,9 +49,10 @@ namespace CsTool.Logger
         /// location is writeable, this interface should log. Else, the application continues.
         /// This logger is not intended for general use. Use Logger.Write() instead.
         /// </summary>
+        /// <param name="logPriority">Log priority</param>
         /// <param name="formattedMessage">String formatted message</param>
         /// <param name="args">Arguments for the formatted message</param>
-        private static void WriteIt(LogPriority logPriority, string formattedMessage, params object[] args)
+        private static void WriteIt(LogPriority logPriority, string messageFormat, params object[] args)
         {
             try
             {
@@ -73,9 +74,9 @@ namespace CsTool.Logger
                 {
                     // Unfortunately we have to use try() for this method to assist the programmer debug logging messages which
                     // can be runtime configurable.
-                    formattedMessage = string.Format(formattedMessage, args);
+                    messageFormat = string.Format(messageFormat, args);
                 }
-                string message = string.Format("{0:HH:mm:ss.fff}: {1}: {2}\n", date, logPriority.ToString(), formattedMessage);
+                string message = string.Format("{0:HH:mm:ss.fff}: {1}: {2}\n", date, logPriority.ToString(), messageFormat);
                 File.AppendAllText(fullFileName, message);
             }
             catch { }
@@ -86,9 +87,9 @@ namespace CsTool.Logger
         /// </summary>
         /// <param name="formattedMessage">String formatted message</param>
         /// <param name="args">formatted message arguments</param>
-        public static void Write(string formattedMessage, params object[] args)
+        public static void Write(string messageFormat, params object[] args)
         {
-            WriteIt(LogPriority.Info, formattedMessage, args);
+            WriteIt(LogPriority.Info, messageFormat, args);
         }
 
         /// <summary>
@@ -96,25 +97,44 @@ namespace CsTool.Logger
         /// </summary>
         /// <param name="formattedMessage">String formatted message</param>
         /// <param name="args">formatted message arguments</param>
-        public static void Write(LogPriority logPriority, string formattedMessage, params object[] args)
+        public static void Write(LogPriority logPriority, string messageFormat, params object[] args)
         {
-            WriteIt(logPriority, formattedMessage, args);
+            WriteIt(logPriority, messageFormat, args);
         }
         /// <summary>
         /// Log an exception message
         /// </summary>
         /// <param name="exception">The exception</param>
-        /// <param name="formattedMessage">Unformatted string or formatted string with object arguments</param>
+        /// <param name="messageFormat">Unformatted string or formatted string with object arguments</param>
         /// <param name="args">Arguments for the formatted message</param>
-        public static void Write(Exception exception, string formattedMessage, params object[] args)
+        public static void Write(Exception exception, string messageFormat, params object[] args)
         {
             string errorMessage = string.Concat(
-                            formattedMessage,
+                            messageFormat,
                             "\n**Exception: ", exception.Message,
                             "\n  Line: ", exception.Source,
                             "\n  StackTrace: ", exception.StackTrace);
 
             WriteIt(LogPriority.ErrorCritical, errorMessage, args);
+        }
+
+        /// <summary>
+        /// Log of last resort: Log a message including the line number, member name, source filename.
+        /// </summary>
+        /// <param name="logPriority">Log priority</param>
+        /// <param name="messageFormat">String formatted message</param>
+        /// <param name="args">formatted message arguments</param>
+        public static void WriteDebug(LogPriority logPriority, string messageFormat, params object[] args)
+        {
+#if DEBUG
+            StackFrame frame = new StackFrame(2, true);
+            string className = frame.GetMethod().DeclaringType.Name;
+            string memberName = frame.GetMethod().Name;
+            int lineNumber = frame.GetFileLineNumber();
+            string fileName = frame.GetFileName();
+            messageFormat = string.Format("{0}\n{1}.{2}() Line {3}: {4}", messageFormat, className, memberName, lineNumber, fileName);
+#endif
+            WriteIt(logPriority, messageFormat, args);
         }
     }
 }

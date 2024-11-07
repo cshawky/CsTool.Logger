@@ -218,7 +218,7 @@ namespace CsTool.Logger
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
-                //Log.Write("GetWriteablePath: Created path {0}", path);
+                Log.WriteDebug(LogPriority.Debug, "Created path {0}", path);
             }
             return path;
         }

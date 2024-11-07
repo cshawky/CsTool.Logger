@@ -32,7 +32,7 @@ namespace CsTool.Logger
     public interface ILogBase //: IDisposable
     {
         //
-        // CsTool.CoreUtilities.Logger Interfaces. 
+        // CsTool.Logger Interfaces. 
         //
         void CloseAndFlush(int waitTime = 0, string closeReason = null);
         void DisplayLogFile();

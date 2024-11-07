@@ -247,7 +247,7 @@
         ///     <LogBase version="1.0.0" lastsaved="28/09/2024 4:12:56 PM +10:00">
         ///         <CountLoggedMessagesMaximum>100000</CountLoggedMessagesMaximum>
         ///         <CountOldLogFilesToKeep>20</CountOldLogFilesToKeep>
-        ///         <FileNameDateFilter></FileNameDateFilter>
+        ///         <FileNameDateFormat></FileNameDateFormat>
         ///         <IsConsoleLoggingEnabled>False</IsConsoleLoggingEnabled>
         ///         <IsLoseMessageOnBufferFull>False</IsLoseMessageOnBufferFull>
         ///         <IsShowMessagesEnabledByDefault>True</IsShowMessagesEnabledByDefault>

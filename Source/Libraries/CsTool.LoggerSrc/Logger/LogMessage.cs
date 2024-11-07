@@ -77,7 +77,7 @@ namespace CsTool.Logger
         public virtual void Write(LogPriority logPriority, string messageFormat, params object[] args)
         {
             if ((Int32)logPriority > (Int32)LogThresholdMaxLevel) return;
-            if (IsLoseMessageOnBufferFull  && bc.Count() >= bc.BoundedCapacity) return;
+            if (IsLoseMessageOnBufferFull && bc.Count() >= bc.BoundedCapacity) return;
 
             DateTimeOffset date = DateTimeOffset.Now;
             QueuedMessage p;
@@ -91,6 +91,38 @@ namespace CsTool.Logger
             }
             TryAdd(p);
         }
+
+        /// <summary>
+        /// Log of last resort: Log a message including the line number, member name, source filename.
+        /// </summary>
+        /// <param name="logPriority">Log priority</param>
+        /// <param name="formattedMessage">String formatted message</param>
+        /// <param name="args">formatted message arguments</param>
+        public virtual void WriteDebug(LogPriority logPriority, string messageFormat, params object[] args)
+        {
+            if ((Int32)logPriority > (Int32)LogThresholdMaxLevel) return;
+            if (IsLoseMessageOnBufferFull && bc.Count() >= bc.BoundedCapacity) return;
+            DateTimeOffset date = DateTimeOffset.Now;
+#if DEBUG
+            StackFrame frame = new StackFrame(2, true);
+            string className = frame.GetMethod().DeclaringType.Name;
+            string memberName = frame.GetMethod().Name;
+            int lineNumber = frame.GetFileLineNumber();
+            string fileName = frame.GetFileName();
+            messageFormat = string.Format("{0}\n{1}.{2}() Line {3}: {4}", messageFormat, className, memberName, lineNumber, fileName);
+#endif
+            QueuedMessage p;
+            if (args.Length > 0)
+            {
+                p = new QueuedMessage(logPriority, date, messageFormat, args);
+            }
+            else
+            {
+                p = new QueuedMessage(logPriority, date, messageFormat);
+            }
+            TryAdd(p);
+        }
+
 
         /// <summary>
         /// Core LogMessage method. Serilog compatible calling structure.

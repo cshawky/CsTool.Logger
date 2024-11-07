@@ -56,7 +56,7 @@ namespace CsTool.Logger
                         }
                         catch (Exception exception)
                         {
-                            string msg = String.Format("LogMessage formatting error in \nMsg[{0}], ArgC[{1}]", p.Msg, p.Args.Length);
+                            string msg = String.Format("LogMessage formatting error in \nMsg[{0}], Argument Count = {1}", p.Msg, p.Args.Length);
                             p.Msg = ConstructExceptionMessage(exception, msg);
                         }
                     }

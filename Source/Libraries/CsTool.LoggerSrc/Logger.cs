@@ -136,9 +136,16 @@ namespace CsTool.Logger
 
         #region Tuneable Properties
 
+        /// <summary>
+        /// Specifies the left portion of the log file name. The default is the application name.
+        /// e.g. {FilePrepend}_{UserName}_{FileNameDateFormat}.log
+        /// </summary>
         public static string FilePrepend { get => Instance.FilePrepend; set => Instance.FilePrepend = value; }
 
-        public static string FileNameDateFilter { get => Instance.FileNameDateFilter; set => Instance.FileNameDateFilter = value; }
+        /// <summary>
+        /// Specifies the date format for the log file name. The default is no date. Example "yyyy-MM-dd".
+        /// </summary>
+        public static string FileNameDateFormat { get => Instance.FileNameDateFormat; set => Instance.FileNameDateFormat = value; }
 
         //public static int MaximumLogQueueSize { get => Instance.MaximumLogQueueSize; set => Instance.MaximumLogQueueSize = value; }
 
@@ -148,6 +155,11 @@ namespace CsTool.Logger
         public static bool IsConsoleLoggingEnabled { get => Instance.IsConsoleLoggingEnabled; set => Instance.IsConsoleLoggingEnabled = value; }
 
         public static bool IsLoseMessageOnBufferFull { get => Instance.IsLoseMessageOnBufferFull; set => Instance.IsLoseMessageOnBufferFull = value; }
+
+        /// <summary>
+        /// Includes the user name in the log file name: {FilePrepend}_{UserName}_{FileNameDateFormat}.log
+        /// </summary>
+        public static bool IsUserNameAppended { get => Instance.IsUserNameAppended; set => Instance.IsUserNameAppended = value; }
 
         public static int AddMessageTimeout { get => Instance.AddMessageTimeout; set => Instance.AddMessageTimeout = value; }
 
@@ -177,7 +189,7 @@ namespace CsTool.Logger
         public static void CloseAndFlush(int maxWaitTime = 0, string closeReason = null) => Instance.CloseAndFlush(maxWaitTime, closeReason);
         public static string ConstructExceptionMessage(Exception exception, string simpleMessage) => Instance.ConstructExceptionMessage(exception, simpleMessage);
         public static void DisplayLogFile() => Instance.DisplayLogFile();
-        public static bool IsLogPriorityEnabled(LogPriority priority) => Instance.IsLogPriorityEnabled(priority);
+        public static bool IsLogPriorityEnabled(LogPriority level) => Instance.IsLogPriorityEnabled(level);
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
 
@@ -185,17 +197,24 @@ namespace CsTool.Logger
         /// Set the base directory for all logging. The default location is {StartupPath}\Logs.
         /// </summary>
         public static void SetLogDirectory(string preferredPath) => Instance.SetLogDirectory(preferredPath);
-        public static void Write(string messageTemplate) => Instance.Write(LogPriority.Info, messageTemplate);
-        public static void Write(string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Info, messageTemplate, propertyValues);
-        public static void Write(LogPriority level, string messageTemplate) => Instance.Write(level, messageTemplate);
-        public static void Write(LogPriority level, string messageTemplate, params object[] propertyValues) => Instance.Write(level, messageTemplate, propertyValues);
-        public static void Write(LogPriority logPriority, string messageFormat, NameValueCollection parameters) => Instance.Write(logPriority, messageFormat, parameters);
-        public static void WriteRaw(LogPriority logPriority, string rawMessage, params object[] args) => Instance.WriteRaw(logPriority, rawMessage, args);
+        public static void Write(string messageFormat) => Instance.Write(LogPriority.Info, messageFormat);
+        public static void Write(string messageFormat, params object[] propertyValues) => Instance.Write(LogPriority.Info, messageFormat, propertyValues);
+        public static void Write(LogPriority level, string messageFormat) => Instance.Write(level, messageFormat);
+        public static void Write(LogPriority level, string messageFormat, params object[] propertyValues) => Instance.Write(level, messageFormat, propertyValues);
+        public static void Write(LogPriority level, string messageFormat, NameValueCollection parameters) => Instance.Write(level, messageFormat, parameters);
+        public static void WriteRaw(LogPriority level, string rawMessage, params object[] args) => Instance.WriteRaw(level, rawMessage, args);
         public static void Write(Exception exception) => Instance.Write(exception);
-        public static void Write(Exception exception, string messageTemplate) => Instance.Write(LogPriority.Fatal, exception, messageTemplate);
-        public static void Write(Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Fatal, exception, messageTemplate, propertyValues);
-        public static void Write(LogPriority level, Exception exception, string messageTemplate) => Instance.Write(level, exception, messageTemplate);
-        public static void Write(LogPriority level, Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(level, exception, messageTemplate, propertyValues);
+        public static void Write(Exception exception, string messageFormat) => Instance.Write(LogPriority.Fatal, exception, messageFormat);
+        public static void Write(Exception exception, string messageFormat, params object[] propertyValues) => Instance.Write(LogPriority.Fatal, exception, messageFormat, propertyValues);
+        public static void Write(LogPriority level, Exception exception, string messageFormat) => Instance.Write(level, exception, messageFormat);
+        public static void Write(LogPriority level, Exception exception, string messageFormat, params object[] propertyValues) => Instance.Write(level, exception, messageFormat, propertyValues);
+        /// <summary>
+        /// Log the message and include the source file reference, method and line number.
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="messageFormat"></param>
+        /// <param name="propertyValues"></param>
+        public static void WriteDebug(LogPriority level, string messageFormat, params object[] propertyValues) => Instance.WriteDebug(level, messageFormat, propertyValues);
 
         //
         // A few NLog log compatible method names, mainly for some test comparison. TODO Implement more if needed.
@@ -203,24 +222,24 @@ namespace CsTool.Logger
         /// <summary>
         /// NLog compatible log method. This method is not recommended for new applications.
         /// </summary>
-        public static void Info(string messageTemplate) => Instance.Write(LogEventLevel.Information, messageTemplate, null);
+        public static void Info(string messageFormat) => Instance.Write(LogEventLevel.Information, messageFormat, null);
         /// <summary>
         /// NLog compatible log method. This method is not recommended for new applications.
         /// </summary>
-        public static void Info(string messageTemplate, params object[] propertyValues) => Instance.Write(LogEventLevel.Information, messageTemplate, propertyValues);
+        public static void Info(string messageFormat, params object[] propertyValues) => Instance.Write(LogEventLevel.Information, messageFormat, propertyValues);
         /// <summary>
         /// NLog compatible log method. This method is not recommended for new applications.
         /// </summary>
-        public static void Debug(string messageTemplate) => Instance.Write(LogEventLevel.Debug, messageTemplate, null);
+        public static void Debug(string messageFormat) => Instance.Write(LogEventLevel.Debug, messageFormat, null);
         /// <summary>
         /// NLog compatible log method. This method is not recommended for new applications.
         /// </summary>
-        public static void Debug(string messageTemplate, params object[] propertyValues) => Instance.Write(LogEventLevel.Debug, messageTemplate, propertyValues);
+        public static void Debug(string messageFormat, params object[] propertyValues) => Instance.Write(LogEventLevel.Debug, messageFormat, propertyValues);
 
         /// <summary>
         /// NLog compatible log method. This method is not recommended for new applications.
         /// </summary>
-        public static void Log(LogLevel logLevel, string messageTemplate, params object[] propertyValues) => Instance.Write((LogPriority)logLevel, messageTemplate, propertyValues);
+        public static void Log(LogLevel level, string messageFormat, params object[] propertyValues) => Instance.Write((LogPriority)level, messageFormat, propertyValues);
 
         //
         // Basic Serilog equivalent interfaces (some) to assist if migrating to/from Serilog.
@@ -228,15 +247,15 @@ namespace CsTool.Logger
         /// <summary>
         /// Serilog compatible log method.
         /// </summary>
-        public static void Write(LogEventLevel level, string messageTemplate) => Instance.Write(level, messageTemplate, null);
+        public static void Write(LogEventLevel level, string messageFormat) => Instance.Write(level, messageFormat, null);
         /// <summary>
         /// Serilog compatible log method.
         /// </summary>
-        public static void Write(LogEventLevel level, string messageTemplate, params object[] propertyValues) => Instance.Write(level, messageTemplate, propertyValues);
+        public static void Write(LogEventLevel level, string messageFormat, params object[] propertyValues) => Instance.Write(level, messageFormat, propertyValues);
         /// <summary>
         /// Serilog compatible log method.
         /// </summary>
-        public static void Write(LogEventLevel level, Exception exception, string messageTemplate) => Instance.Write((LogPriority)level, exception, messageTemplate);
+        public static void Write(LogEventLevel level, Exception exception, string messageFormat) => Instance.Write((LogPriority)level, exception, messageFormat);
 
         /// <summary>
         /// Legacy Interface for easy exception logging. Use Logger.Write(exception,...) instead.
@@ -248,15 +267,15 @@ namespace CsTool.Logger
         /// Legacy Interface for easy exception logging. Use Logger.Write(exception,...) instead.
         /// </summary>
         /// <param name="exception">The exception will be added to the log message</param>
-        public static void LogExceptionMessage(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
+        public static void LogExceptionMessage(LogPriority level, Exception exception, string progressMessage, params object[] args) => Instance.Write(level, exception, progressMessage, args);
 
         //
         // GitHub Copilot liked this format but it might have been guessing
         //
         public static void LogException(Exception exception) => Instance.Write(LogPriority.ErrorProcessing, exception, "Exception");
-        public static void LogException(Exception exception, string messageTemplate) => Instance.Write(LogPriority.Fatal, exception, messageTemplate);
-        public static void LogException(Exception exception, string messageTemplate, params object[] propertyValues) => Instance.Write(LogPriority.Fatal, exception, messageTemplate, propertyValues);
-        public static void LogException(LogPriority logPriority, Exception exception, string progressMessage, params object[] args) => Instance.Write(logPriority, exception, progressMessage, args);
+        public static void LogException(Exception exception, string messageFormat) => Instance.Write(LogPriority.Fatal, exception, messageFormat);
+        public static void LogException(Exception exception, string messageFormat, params object[] propertyValues) => Instance.Write(LogPriority.Fatal, exception, messageFormat, propertyValues);
+        public static void LogException(LogPriority level, Exception exception, string progressMessage, params object[] args) => Instance.Write(level, exception, progressMessage, args);
 
         //
         // CsTool.Logger interfaces compatible with older/legacy CsTool.CoreUtilities.MyLogger Interfaces
@@ -264,20 +283,20 @@ namespace CsTool.Logger
 
         public static void LogMessage(string messageFormat, params object[] args) => Instance.Write(LogPriority.Info, messageFormat, args);
 
-        public static void LogMessage(LogPriority logPriority, string simpleMessage) => Instance.Write(logPriority, simpleMessage);
-        public static void LogMessage(LogPriority logPriority, string messageFormat, params object[] args) => Instance.Write(logPriority, messageFormat, args);
+        public static void LogMessage(LogPriority level, string simpleMessage) => Instance.Write(level, simpleMessage);
+        public static void LogMessage(LogPriority level, string messageFormat, params object[] args) => Instance.Write(level, messageFormat, args);
 
-        public static void LogMessage(LogPriority logPriority, string messageFormat, NameValueCollection parameters) => Instance.Write(logPriority, messageFormat, parameters);
+        public static void LogMessage(LogPriority level, string messageFormat, NameValueCollection parameters) => Instance.Write(level, messageFormat, parameters);
 
 
-        public static void LogRawMessage(LogPriority logPriority, string rawMessage, params object[] args) => Instance.WriteRaw(logPriority, rawMessage, args);
+        public static void LogRawMessage(LogPriority level, string rawMessage, params object[] args) => Instance.WriteRaw(level, rawMessage, args);
 
         //
         // Legacy CsTool.CoreUtilities interfaces. Do not use with new applications.
         //
         public static void LogMessageWithStats(string message, bool countAsError = false, bool ignoreExceptions = false) => Instance.LogMessageWithStats(message, countAsError, ignoreExceptions);
 
-        public static void LogMessageWithStats(LogPriority logPriority, string message, bool countAsError = false, bool ignoreExceptions = false) => Instance.LogMessageWithStats(logPriority, message, countAsError, ignoreExceptions);
+        public static void LogMessageWithStats(LogPriority level, string message, bool countAsError = false, bool ignoreExceptions = false) => Instance.LogMessageWithStats(level, message, countAsError, ignoreExceptions);
 
         #endregion Methods
 

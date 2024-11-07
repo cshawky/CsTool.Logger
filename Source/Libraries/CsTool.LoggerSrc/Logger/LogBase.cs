@@ -79,6 +79,21 @@ namespace CsTool.Logger
         #region Initialisation
 
         /// <summary>
+        /// Indicates that this Logger instance has been initialised
+        /// </summary>
+        private bool IsInitialised { get; set; } = false;
+
+        /// <summary>
+        /// Inidcates that the ProcessExit event has been registered.
+        /// </summary>
+        private static bool IsProcessExitRegistered { get; set; } = false;
+
+        /// <summary>
+        /// Indicates that the UnhandledException event has been registered.
+        /// </summary>
+        private static bool IsExceptionHandlerRegistered { get; set; } = false;
+
+        /// <summary>
         /// Thread safe lock object for all parameters being updated by the logger.
         /// </summary>
         private static readonly object padLockProperties = new object();
@@ -88,69 +103,90 @@ namespace CsTool.Logger
         /// </summary>
         private static readonly object padLockLogMessage = new object();
 
+        public LogBase()
+        {
+            lock (padLockProperties)
+            {
+                // Ensure all unhandled exceptions are logged
+                if (!IsExceptionHandlerRegistered)
+                    AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(LogUnhandledException);
+                IsExceptionHandlerRegistered = true;
+
+                // Subscribe to the AppDomain.ProcessExit event. most important step to ensure all messages are saved on exit.
+                if (!IsProcessExitRegistered)
+                {
+                    AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+                    IsProcessExitRegistered = true;
+                }
+
+                InitialiseLog();
+            }
+        }
+
         /// <summary>
-        /// Initialise class. If no filename is provided full initialisation is deferred.
-        /// Name format: {FilePrepend}_{UserName}_{DateTime}.log
+        /// Initialise an instance of LogBase with the parameters provided. These override file parameters.
+        /// Name format: {FilePrepend}_{UserName}_{DateTimeFormat}.log
         /// </summary>
         /// <param name="newFilePrependText">The text string to append the date to in order to create a valid file name.
         /// If date stamping is disabled this is the file name excluding extension.</param>
         /// <param name="enableUserName">If true, the user name is appended to the file name.</param>
         /// <param name="fileNameDateTime">The date format to append to the file name.</param>
-        /// <remarks>
-        /// TODO: Use of locks is a recent addition prior to adding the Lazy<> initialisation for cleaner start up.
-        /// </remarks>
-        public LogBase(string newFilePrependText = null, bool enableUserName = false, string fileNameDateTime = null)
+        public LogBase(string newFilePrependText, bool enableUserName, string fileNameDateTime)
         {
             lock (padLockProperties)
             {
-                //
-                // Create the message FIFO queue.
-                //
-                bc = new BlockingCollection<QueuedMessage>(MaximumLogQueueSize);
+                InitialiseLog();
+                IsUserNameAppended = enableUserName;
+                if (newFilePrependText != null)
+                    FilePrepend = newFilePrependText;
+                if (fileNameDateTime != null)
+                    FileNameDateFormat = fileNameDateTime;
+            }
+        }
 
-                //
-                // Logger messages may now be queued.
-                //
+        /// <summary>
+        /// Initialise the message queue and various settings for the logger.
+        /// </summary>
+        public void InitialiseLog()
+        {
+            if (IsInitialised)
+            {
+                Log.WriteDebug(LogPriority.Debug, "InitialiseLog: Logger already initialised");
+                return;
+            }
 
-                // Ensure all unhandled exceptions are logged
-                if (!isExceptionHandlerRegistered)
-                    AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(LogUnhandledException);
-                isExceptionHandlerRegistered = true;
+            //
+            // Create the message FIFO queue.
+            //
+            bc = new BlockingCollection<QueuedMessage>(MaximumLogQueueSize);
 
-                //
-                // Load logger settings which includes identifying the log file path.
-                //
-                LoadAppDefaults(this, "1.0.0");
+            //
+            // Logger messages may now be queued.
+            //
 
-                //
-                // Initialise the custom logger settings. This only happens when the user app creates an additional logger.
-                //
-                if ( !string.IsNullOrWhiteSpace(newFilePrependText) )
-                    filePrepend = newFilePrependText;
+            //
+            // Load logger settings which includes identifying the log file path.
+            //
+            LoadAppDefaults(this, "1.0.0");
 
-                enableUserNamePrepend = enableUserName;
-                if (fileNameDateTime != null )
-                    FileNameDateFilter = fileNameDateTime;
+            //
+            // Create the log file name
+            //
+            //LogFileName = CreateLogFileName();
 
-                //
-                // Create the log file name
-                //
-                LogFileName = CreateLogFileName();
+            //
+            // Now validate or set the log file path
+            //
+            SetLogDirectory(LogFilePath);
 
-                //
-                // Now validate or set the log file path
-                //
-                SetLogDirectory(LogFilePath);
-
-                //
-                // Backup old log files, this will rename the existing file unless append is enabled.
-                // but the new log file is not opened until a message is ready to be consumed.
-                //
-                if ( isLogFileFirstOpen && !isAppendFileEnabled )
-                {
-                    BackupLogFiles();
-                    CountLoggedMessages = 0;
-                }
+            //
+            // Backup old log files, this will rename the existing file unless append is enabled.
+            // but the new log file is not opened until a message is ready to be consumed.
+            //
+            if (isLogFileFirstOpen && !isAppendFileEnabled)
+            {
+                BackupLogFiles();
+                CountLoggedMessages = 0;
             }
 
             //
@@ -166,8 +202,7 @@ namespace CsTool.Logger
             timer.AutoReset = true;
             timer.Enabled = true;
 
-            // Subscribe to the AppDomain.ProcessExit event. most important step to ensure all messages are saved on exit.
-            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+            IsInitialised = true;
         }
 
         /// <summary>
@@ -181,8 +216,6 @@ namespace CsTool.Logger
         }
 
 
-        private bool isExceptionHandlerRegistered = false;
-
         /// <summary>
         /// Log unhandled exceptions to the log file.
         /// </summary>
@@ -191,7 +224,10 @@ namespace CsTool.Logger
         private void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Exception exception = e.ExceptionObject as Exception;
-            Logger.Write(exception, "LogUnhandledException");
+            if ( IsInitialised )
+                Logger.Write(exception, "LogUnhandledException");
+            else
+                Log.Write(exception, "LogUnhandledException");
         }
 
         /// <summary>
@@ -205,7 +241,7 @@ namespace CsTool.Logger
             {
                 // Should not get here but, just in case wait until the message queue bc is empty as another task is emptying it
                 Log.Write(LogPriority.ErrorCritical, "Dispose: We should not get here, waiting for queue to empty...");
-                while (bc.Count > 0) Thread.Sleep(100);
+                if ( bc != null ) while (bc.Count > 0) Thread.Sleep(100);
                 return;
             }
             lock (padLockProperties)
@@ -391,12 +427,12 @@ namespace CsTool.Logger
             try
             {
                 string prependName = FilePrepend;
-                if (EnableUserNamePrepend)
+                if (IsUserNameAppended)
                     prependName += "_" + Environment.UserName;
 
-                if (!string.IsNullOrWhiteSpace(FileNameDateFilter))
+                if (!string.IsNullOrWhiteSpace(FileNameDateFormat))
                 {
-                    string dateText = DateTimeOffset.Now.ToString(FileNameDateFilter);
+                    string dateText = DateTimeOffset.Now.ToString(FileNameDateFormat);
                     name = string.Format("{0}_{1}{2}", prependName, dateText, LogFileExtension);
                 }
                 else
@@ -406,9 +442,9 @@ namespace CsTool.Logger
             }
             catch ( Exception exception )
             {
-                // Default to last name
+                // Default to last name used
                 Logger.LogExceptionMessage(LogPriority.ErrorProcessing,exception,"Failed to generate new log file name, using previous name");
-                name = LogFileName;
+                name = logFileName;
             }
             return name;
         }
@@ -500,6 +536,8 @@ namespace CsTool.Logger
                 if (!Directory.Exists(preferredPath))
                 {
                     Directory.CreateDirectory(preferredPath);
+                    Log.WriteDebug(LogPriority.Debug, "Created path {0}", preferredPath);
+
                 }
             }
             catch (Exception exception)
@@ -513,6 +551,6 @@ namespace CsTool.Logger
             return LogFilePath;
         }
 
-        #endregion FileMethods
+#endregion FileMethods
     }
 }

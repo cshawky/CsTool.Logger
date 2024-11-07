@@ -33,20 +33,38 @@ namespace CsTool.Logger
         [ModelSettingsProperty]
         public bool IsConsoleLoggingEnabled { get; set; } = false;
 
-        /// <summary>
-        /// Maximum number of queued messages before messages are lost or logging is blocked.
-        /// TODO: No point allowing this setting to change because the queue is already created
-        /// before it can be changed.
-        /// </summary>
-        //[ModelSettingsProperty]
-        private int MaximumLogQueueSize { get; set; } = 100000;
-
-        /// <summary>
+         /// <summary>
         /// When disabled, the logging will wait until the buffer is no longer full.
         /// When enable, the log message is lost.
         /// </summary>
         [ModelSettingsProperty]
         public bool IsLoseMessageOnBufferFull { get; set; } = false;
+
+        /// <summary>
+        /// Backend field for the <code>IsUserNameAppended</code> property.
+        /// </summary>
+        private bool isUserNameAppended = true;
+
+        /// <summary>
+        /// Enable the inclusion of the user name in the log file name. {FilePrepend}_{UserName}.log
+        /// 
+        /// </summary>
+        [ModelSettingsProperty]
+        public bool IsUserNameAppended
+        {
+            get
+            {
+                return isUserNameAppended;
+            }
+            set
+            {
+                if (isUserNameAppended != value)
+                {
+                    isUserNameAppended = value;
+                    IsFileNameChangePending = true;
+                }
+            }
+        }
 
         /// <summary>
         /// The maximum number of logged messages before the file is closed and a new file open.
@@ -64,20 +82,27 @@ namespace CsTool.Logger
         public uint CountOldLogFilesToKeep { get; set; } = 20;
 
         /// <summary>
+        /// Maximum number of queued messages before messages are lost or logging is blocked.
+        /// TODO: No point allowing this setting to change because the queue is already created
+        /// before it can be changed.
+        /// </summary>
+        //[ModelSettingsProperty]
+        private int MaximumLogQueueSize { get; set; } = 100000;
+
+        /// <summary>
         /// Specify a date format to include in the file name. Examples:
         ///     "yyyy-MM-dd"
         ///     "yyyy-MM"
         /// </summary>
         [ModelSettingsProperty]
-        public string FileNameDateFilter
+        public string FileNameDateFormat
         {
-            get => fileNameDateFilter;
+            get => fileNameDateFormat;
             set
             {
-                if (fileNameDateFilter != value)
+                if (fileNameDateFormat != value)
                 {
-                    fileNameDateFilter = value;
-                    LogFileName = CreateLogFileName();
+                    fileNameDateFormat = value;
                 }
             }
         }
@@ -107,6 +132,46 @@ namespace CsTool.Logger
                     lock (padLockProperties)
                     {
                         logFilePath = value;
+                        IsFileNameChangePending = true;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Backend field for the <code>FilePrepend</code> property.
+        /// </summary>
+        private string filePrepend;
+
+        /// <summary>
+        /// Define the pre pended portion of the log file. If an existing log file is open
+        /// that file will be closed and a new file created. ALl messages will be flushed
+        /// before closing. This is done asynchronously.
+        /// </summary>
+        [ModelSettingsPropertyWithSubstitutions]
+        public string FilePrepend
+        {
+            get
+            {
+                if (filePrepend == null)
+                    FilePrepend = LogUtilities.MyProcessName;
+                return filePrepend;
+            }
+            set
+            {
+                if (String.IsNullOrWhiteSpace(value))
+                    return;
+                lock (padLockFileObjects)
+                {
+                    if (filePrepend != value)
+                    {
+                        // The log file naming convention has changed. Close all files and initialise new log files
+                        // Change default pre pended text
+                        if (filePrepend != value)
+                        {
+                            filePrepend = value;
+                            IsFileNameChangePending = true;
+                        }
                     }
                 }
             }
@@ -137,6 +202,7 @@ namespace CsTool.Logger
         [ModelSettingsInstance]
         public SampleModelSettings SampleSettings { get; set; } = new SampleModelSettings();
 #endif // TEST_NEW_MODEL_SETTINGS
+
         #endregion ModelSettings Properties
 
         //
@@ -170,70 +236,6 @@ namespace CsTool.Logger
                         isFileNameChangePending = value;
                         if ( isFileNameChangePending )
                             LogCommand(LogCommandAction.Rename, value);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Backend field for the <code>EnableUserNamePrepend</code> property.
-        /// </summary>
-        private bool enableUserNamePrepend;
-
-        /// <summary>
-        /// Enable the inclusion of the user name in the log file name. {FilePrepend}_{UserName}.log
-        /// 
-        /// </summary>
-        public bool EnableUserNamePrepend
-        {
-            get
-            {
-                return enableUserNamePrepend;
-            }
-            set
-            {
-                if (enableUserNamePrepend != value)
-                {
-                    enableUserNamePrepend = value;
-                    LogFileName = CreateLogFileName();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Backend field for the <code>FilePrepend</code> property.
-        /// </summary>
-        private string filePrepend;
-
-        /// <summary>
-        /// Define the pre pended portion of the log file. If an existing log file is open
-        /// that file will be closed and a new file created. ALl messages will be flushed
-        /// before closing. This is done asynchronously.
-        /// </summary>
-        public string FilePrepend
-        {
-            get
-            {
-                if (filePrepend == null)
-                    FilePrepend = LogUtilities.MyProcessName;
-                return filePrepend;
-            }
-            set
-            {
-                if (String.IsNullOrWhiteSpace(value))
-                    return;
-                lock (padLockFileObjects)
-                {
-                    if (filePrepend != value)
-                    {
-                        // The log file naming convention has changed. Close all files and initialise new log files
-                        // Change default pre pended text
-                        value = value.Replace(".vshost", "").Replace(".exe", "").Trim();
-                        if (filePrepend != value)
-                        {
-                            filePrepend = value;
-                            LogFileName = CreateLogFileName();
-                        }
                     }
                 }
             }
@@ -299,9 +301,9 @@ namespace CsTool.Logger
 
 
         /// <summary>
-        /// Backend field for <code>FileNameDateFilter</code> property.
+        /// Backend field for <code>FileNameDateFormat</code> property.
         /// </summary>
-        private string fileNameDateFilter;
+        private string fileNameDateFormat;
 
         /// <summary>
         /// When enabled, LogExceptionMessage method calls are counted and stored in CoreUtilities Model.
@@ -485,9 +487,10 @@ namespace CsTool.Logger
         {
             get 
             {
-                if (logFileName == null)
-                    logFileName = LogUtilities.MyProcessName + ".log";
-                return logFileName; 
+//                if (logFileName == null)
+ //                   logFileName = LogUtilities.MyProcessName + ".log";
+   //             return logFileName; 
+                return logFileName;
             }
             private set
             {
