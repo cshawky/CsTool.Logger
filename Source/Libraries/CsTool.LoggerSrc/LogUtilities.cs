@@ -244,8 +244,11 @@ namespace CsTool.Logger
         /// <param name="incrementNameNotExtension">True to increment the name and leave the extension unchanged</param>
         public static void BackupOldFiles(string fullFileName, uint countOldFilesToKeep, string optionalExtension = null, bool incrementNameNotExtension = false)
         {
-            // Files are renamed only if the active file name exists.
+            // Files are renamed only if the active file name exists and is non zero length.
             if (!File.Exists(fullFileName)) return;
+
+            FileInfo fileInfo = new FileInfo(fullFileName);
+            if (fileInfo.Length == 0) return;
 
             string extension = Path.GetExtension(fullFileName);
 
@@ -261,14 +264,15 @@ namespace CsTool.Logger
 
             if (countOldFilesToKeep < 1) return;
 
+            bool needsLogging = true;
 
+            // For each old file move it to the next number. The highest number is the oldest file.
             for (int i = (int)countOldFilesToKeep - 1; i >= 0; i--)
             {
                 string oldFileName = System.String.Empty;
-                string olderFileName;
+                string olderFileName = System.String.Empty;
                 try
                 {
-
                     if (incrementNameNotExtension)
                     {
                         if (i > 0)
@@ -290,6 +294,8 @@ namespace CsTool.Logger
                     {
                         File.Delete(olderFileName);
                     }
+                    
+
                     if (File.Exists(oldFileName))
                     {
                         if (IsFilePathWritable(oldFileName))
@@ -300,7 +306,12 @@ namespace CsTool.Logger
                 }
                 catch (Exception exception)
                 {
-                    Logger.LogExceptionMessage(LogPriority.Debug, exception, "Backup Old Log File failed: " + oldFileName);
+                    // Expecting this to be a write lock exception
+                    if (needsLogging)
+                    {
+                        Log.Write("Backup Old Log File failed: {0} -> {1}\n     {2}", oldFileName, olderFileName, exception.Message);
+                        needsLogging = false;
+                    }
                 }
             }
         }

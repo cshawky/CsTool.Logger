@@ -60,20 +60,25 @@ namespace CsTool.Logger
                     Directory.CreateDirectory(FullFilePath);
                 if (isFirstRun)
                 {
-                    string oldFile = FullFileName + ".old";
-                    if (File.Exists(FullFileName))
+                    try
                     {
-                        if (File.Exists(oldFile)) File.Delete(oldFile);
-                        File.Move(FullFileName, oldFile);
+                        string oldFile = FullFileName + ".old";
+                        if (File.Exists(FullFileName))
+                        {
+                            if (File.Exists(oldFile)) File.Delete(oldFile);
+                            File.Move(FullFileName, oldFile);
+                        }
                     }
-                    File.AppendAllText(FullFileName, "================== CsTool.Logger Internal Logger ===============================================\n");
+                    catch { }
+                    string text = String.Format(
+                        "\n============================== CsTool.Logger Internal Logger : {0:yyyy-MMM-dd ddd HH:mm:ss}  =====================\n\n",
+                        DateTimeOffset.Now);
+                    File.AppendAllText(FullFileName, text);
                     isFirstRun = false;
                 }
                 DateTimeOffset date = DateTimeOffset.Now;
                 if (args.Length > 0)
                 {
-                    // Unfortunately we have to use try() for this method to assist the programmer debug logging messages which
-                    // can be runtime configurable.
                     messageFormat = string.Format(messageFormat, args);
                 }
                 string message = string.Format("{0:HH:mm:ss.fff}: {1}: {2}\n", date, logPriority.ToString(), messageFormat);

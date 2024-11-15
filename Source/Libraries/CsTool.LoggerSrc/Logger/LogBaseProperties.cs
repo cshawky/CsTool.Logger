@@ -178,6 +178,14 @@ namespace CsTool.Logger
         }
 
         /// <summary>
+        /// When the LogFileName isn't unique, or a write conflict occurs, this string modifies the FilePrepend
+        /// such that the result is unique. A value of zero refers to the default FilePrepend when no conflict occurs.
+        /// </summary>
+        private int FilePrependUniqueCounter { get; set; } = 0;
+
+        private string FilePrependUnique { get; set; } 
+
+        /// <summary>
         /// The threshold debug priority that will enable log messages to be written.
         /// The lower the integer value of DebugThresholdDefault, the fewer debug messages will be displayed.
         /// Setting the LogThresholdMaxLevel to LogPriority.Never (a very big number) will disable all logging.

@@ -9,6 +9,7 @@
 namespace CsTool.Logger
 {
     using System;
+    using System.IO;
 
     /// <summary>
     /// The Thread Safe Logger interface for your application.
@@ -92,6 +93,12 @@ namespace CsTool.Logger
                         if (streamWriter == null || !streamWriter.BaseStream.CanWrite)
                             CreateNewLogFile();
 
+                        if (streamWriter == null)
+                        {
+                            // If we can't create a log file, then log to the log of last resort
+                            Log.Write(message);
+                            break;
+                        }
                         streamWriter.WriteLine(message);
                         if (IsSyncDue)
                         {
@@ -110,7 +117,7 @@ namespace CsTool.Logger
                         // Should never get here but attempt to get a message logged, assuming some format parsing issue.
                         //
                         if (!p.IsException)
-                            Write(LogPriority.Fatal, exception, null);
+                            Log.Write(exception, "LogQueuedMessage Write Error");
                     }
                     break;
 
@@ -166,13 +173,30 @@ namespace CsTool.Logger
         /// </summary>
         private void BackupLogFiles()
         {
-            CloseAndFlush(0);
-            lock (padLockFileObjects)
+            string fullFileName = string.Empty;
+            try
             {
-                // Grab the latest file name as we don't rename old log files if the name has changed
-                string fileName = CreateLogFileName();
-                string fullFileName = LogFilePath + @"\" + fileName;
-                LogUtilities.BackupOldFiles(fullFileName, CountOldLogFilesToKeep, null, true);
+                CloseAndFlush(0);
+                lock (padLockFileObjects)
+                {
+                    // Grab the latest file name as we don't rename old log files if the name has changed
+                    string fileName = CreateLogFileName();
+                    fullFileName = LogFilePath + @"\" + fileName;
+
+                    // Delete oldFileName if the file size is zero
+                    if (File.Exists(fullFileName))
+                    {
+                        FileInfo fileInfo = new FileInfo(fullFileName);
+                        if (fileInfo.Length > 0)
+                        {
+                            LogUtilities.BackupOldFiles(fullFileName, CountOldLogFilesToKeep, null, true);
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Write(exception,"Failed to Backup Log Files: {0}", fullFileName);
             }
         }
 

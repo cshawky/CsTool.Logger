@@ -84,6 +84,11 @@ namespace CsTool.Logger
         private bool IsInitialised { get; set; } = false;
 
         /// <summary>
+        /// Indicates that the first Logger instance has been initialised. i.e. the singleton instance.
+        /// </summary>
+        private static bool IsFirstInitialised { get; set; } = false;
+
+        /// <summary>
         /// Inidcates that the ProcessExit event has been registered.
         /// </summary>
         private static bool IsProcessExitRegistered { get; set; } = false;
@@ -107,16 +112,18 @@ namespace CsTool.Logger
         {
             lock (padLockProperties)
             {
-                // Ensure all unhandled exceptions are logged
-                if (!IsExceptionHandlerRegistered)
-                    AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(LogUnhandledException);
-                IsExceptionHandlerRegistered = true;
-
                 // Subscribe to the AppDomain.ProcessExit event. most important step to ensure all messages are saved on exit.
                 if (!IsProcessExitRegistered)
                 {
                     AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
                     IsProcessExitRegistered = true;
+                }
+                
+                // Ensure all unhandled exceptions are logged
+                if (!IsExceptionHandlerRegistered)
+                {
+                    AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(LogUnhandledException);
+                    IsExceptionHandlerRegistered = true;
                 }
 
                 InitialiseLog();
@@ -170,14 +177,14 @@ namespace CsTool.Logger
             LoadAppDefaults(this, "1.0.0");
 
             //
-            // Create the log file name
-            //
-            //LogFileName = CreateLogFileName();
-
-            //
             // Now validate or set the log file path
             //
             SetLogDirectory(LogFilePath);
+
+            //
+            // Create the log file name
+            //
+            CheckLogFileIsWriteable();
 
             //
             // Backup old log files, this will rename the existing file unless append is enabled.
@@ -203,6 +210,7 @@ namespace CsTool.Logger
             timer.Enabled = true;
 
             IsInitialised = true;
+            IsFirstInitialised = true;
         }
 
         /// <summary>
@@ -221,13 +229,27 @@ namespace CsTool.Logger
         /// </summary>
         /// <param name="sender">Sender</param>
         /// <param name="e">Exception object</param>
-        private void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        public static void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Exception exception = e.ExceptionObject as Exception;
-            if ( IsInitialised )
+            if (IsFirstInitialised)
                 Logger.Write(exception, "LogUnhandledException");
             else
                 Log.Write(exception, "LogUnhandledException");
+        }
+
+        /// <summary>
+        /// Log the UI exceptions to the log file. This event handler must be registered in the main form.
+        /// </summary>
+        /// <param name="sender">Sender</param>
+        /// <param name="t">Thread Exception Object</param>
+        public static void LogUIThreadException(object sender, ThreadExceptionEventArgs t)
+        {
+            Exception exception = t.Exception;
+            if (IsFirstInitialised)
+                Logger.Write(exception, "LogUIThreadException");
+            else
+                Log.Write(exception, "LogUIThreadException");
         }
 
         /// <summary>
@@ -268,9 +290,12 @@ namespace CsTool.Logger
                     }
                     if (streamWriter == null || !streamWriter.BaseStream.CanWrite)
                         CreateNewLogFile();
-                    streamWriter.Write(
+                    if (streamWriter != null)
+                    {
+                        streamWriter.Write(
                         "\n============================== Logging stopped : {0:yyyy-MMM-dd ddd HH:mm:ss} : Shutdown requested =====================",
                         DateTimeOffset.Now);
+                    }
                     CloseAndFlush();
                     if (timer != null)
                         timer.Dispose();
@@ -418,6 +443,56 @@ namespace CsTool.Logger
         }
 
         /// <summary>
+        /// Checks if the log file is writeable. If it isn't then the method attempts to create a file name that will
+        /// be writeable.
+        /// </summary>
+        /// <returns>True once a writeable filename is found</returns>
+        private bool CheckLogFileIsWriteable()
+        {
+            string fileName = String.Empty;
+            string fullFileName = String.Empty;
+
+            // Check if the file is writeable
+            for (int i = 0; i < 99; i++)
+            {
+                FilePrependUniqueCounter = i;
+                FilePrependUnique = "(" + FilePrependUniqueCounter.ToString() + ")";
+                try
+                {
+                    fileName = CreateLogFileName();
+                    fullFileName = LogFilePath + @"\" + fileName;
+                    using (FileStream fs = new FileStream(fullFileName, FileMode.Append, FileAccess.Write, FileShare.Read))
+                    {
+                        fs.Close();
+                    }
+                    return true;
+                }
+                catch (Exception)
+                {
+                    Log.Write(LogPriority.Warning, "CheckLogFileIsWriteable: Log file({0}) is not writeable", fullFileName);
+                }
+            }
+            try
+            {
+                // Should not get here. Create a unique file name.
+                FilePrependUnique = "(" + Guid.NewGuid().ToString("N") + ")";
+                fileName = CreateLogFileName();
+                fullFileName = LogFilePath + @"\" + fileName;
+                Log.Write(LogPriority.ErrorCritical, "CheckLogFileIsWriteable: Failed to create a writeable log file in {0}, using {1}", LogFilePath, fileName);
+                using (FileStream fs = new FileStream(fullFileName, FileMode.Append, FileAccess.Write, FileShare.Read))
+                {
+                    fs.Close();
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                Log.Write(LogPriority.Warning, "CheckLogFileIsWriteable: Log file({0}) is not writeable", fullFileName);
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Generate the log file name excluding path
         /// </summary>
         /// <returns>The name of the log file</returns>
@@ -429,6 +504,11 @@ namespace CsTool.Logger
                 string prependName = FilePrepend;
                 if (IsUserNameAppended)
                     prependName += "_" + Environment.UserName;
+
+                if (FilePrependUniqueCounter > 0)
+                { 
+                    prependName += FilePrependUnique;
+                }
 
                 if (!string.IsNullOrWhiteSpace(FileNameDateFormat))
                 {
@@ -461,47 +541,56 @@ namespace CsTool.Logger
         {
             lock (padLockFileObjects)
             {
-                this.CloseAndFlush(0, newFileReason);
-
-                LogFileName = CreateLogFileName();
-
-                if (isLogFileFirstOpen && !isAppendFileEnabled)
+                try
                 {
-                    BackupLogFiles();
-                }
-                FileMode fileMode = FileMode.OpenOrCreate;
+                    this.CloseAndFlush(0, newFileReason);
 
-                //bool append = (isShutDownActive || isAppendFileEnabled ) && CountOldLogFilesToKeep > 0;
-                //if (append) 
+                    LogFileName = CreateLogFileName();
+
+                    if (isLogFileFirstOpen && !isAppendFileEnabled)
+                    {
+                        BackupLogFiles();
+                    }
+                    FileMode fileMode = FileMode.OpenOrCreate;
+
+                    //bool append = (isShutDownActive || isAppendFileEnabled ) && CountOldLogFilesToKeep > 0;
+                    //if (append) 
                     fileMode = FileMode.Append;
 
-                _outputStream = System.IO.File.Open(FullLogFileName, fileMode, FileAccess.Write, FileShare.Read);
+                    _outputStream = System.IO.File.Open(FullLogFileName, fileMode, FileAccess.Write, FileShare.Read);
 
-                IsFileNameChangePending = false;
-                FullLogFileNameOpen = FullLogFileName;
+                    IsFileNameChangePending = false;
+                    FullLogFileNameOpen = FullLogFileName;
 
-                // Parameter reassignment.
-                _encoding = _encoding ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+                    // Parameter reassignment.
+                    _encoding = _encoding ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
-                streamWriter = new StreamWriter(_outputStream, _encoding);
+                    streamWriter = new StreamWriter(_outputStream, _encoding);
 
-                CountLoggedMessages = 0;
+                    CountLoggedMessages = 0;
 
-                // If the queue is full on sudden shutdown, messages are lost.
-                // Suppressing does help with processing about 1500 messages. Suggestions welcome for improvement.
-                //GC.SuppressFinalize(streamWriter);
-                //GC.SuppressFinalize(LogWriter);
+                    // If the queue is full on sudden shutdown, messages are lost.
+                    // Suppressing does help with processing about 1500 messages. Suggestions welcome for improvement.
+                    //GC.SuppressFinalize(streamWriter);
+                    //GC.SuppressFinalize(LogWriter);
 
-                // Rarely used
-                if ( (!String.IsNullOrWhiteSpace(newFileReason) || isLogFileFirstOpen ) && !isShutDownActive)
-                {
-                    DateTimeOffset date = DateTimeOffset.Now;
-                    streamWriter.Write(
-                        "\n============================== Logging started : {0:yyyy-MMM-dd ddd HH:mm:ss} : {1} =====================\n\n",
-                        date, newFileReason);
-                    streamWriter.Flush();
+                    // Rarely used
+                    if ((!String.IsNullOrWhiteSpace(newFileReason) || isLogFileFirstOpen) && !isShutDownActive)
+                    {
+                        DateTimeOffset date = DateTimeOffset.Now;
+                        streamWriter.Write(
+                            "\n============================== Logging started : {0:yyyy-MMM-dd ddd HH:mm:ss} : {1} =====================\n\n",
+                            date, newFileReason);
+                        streamWriter.Flush();
+                    }
+                    isLogFileFirstOpen = false;
                 }
-                isLogFileFirstOpen = false;
+                catch (Exception exception)
+                {
+                    Log.Write(exception, "CreateNewLogFile: Failed to create new log file, attempting to generate a new filename...");
+                    // Assume we now have a write conflict so generate a new file name:
+                    CheckLogFileIsWriteable();
+                }
             }
         }
 
