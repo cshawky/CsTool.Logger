@@ -182,6 +182,8 @@
             //
             // If any portion of the file is missing create it
             //
+            string path = Path.GetDirectoryName(fullFileName);
+
             try
             {
                 if (xDocument == null)
@@ -219,8 +221,10 @@
             }
             catch
             {
-                Write(LogPriority.Fatal, "LoadSettingsFile: Could not re create: {0}", fullFileName);
+                Write(LogPriority.Fatal, "LoadSettingsFile: Could not re construct: {0}", fullFileName);
             }
+
+            // Save the file if required
             try
             {
                 if ( isSaveNeeded && ( createIfMissing || updateIfNeeded) )
@@ -230,10 +234,18 @@
             }
             catch (Exception exception)
             {
-                // Standard user will not be able to overwrite the corrupted file in the application folder.
-                Write(exception, "LoadSettingsFile: File create failed. Path might not be writeable: {0}", fullFileName);
+                if (MyUtilities.IsPathWriteable(path))
+                {
+                    Write(exception, "LoadSettingsFile: File create failed. File might not be writeable: {0}", fullFileName);
+                }
+                else
+                {
+                    // Standard user will not be able to overwrite the corrupted file in the application folder.
+                    Write(LogPriority.ErrorCritical, "LoadSettingsFile: File create failed. Path might not be writeable: {0}", fullFileName);
+                }
             }
 
+            // load the required section
             try
             {
                 int errors = XmlSettingsParsing.LoadClassValues(xMyClassSection, classInstance, version);
@@ -255,8 +267,15 @@
             }
             catch (Exception exception)
             {
-                // Only useful for program debugging during development
-                Write(exception, "LoadSettingsFile: Element({0}.{1}): File create failed: {2}", nameSpaceName, classInstance.GetType().Name, fullFileName);
+                if (MyUtilities.IsPathWriteable(path))
+                {
+                    Write(exception, "LoadSettingsFile: File create failed. File might not be writeable: {0}", fullFileName);
+                }
+                else
+                {
+                    // Standard user will not be able to overwrite the corrupted file in the application folder.
+                    Write(LogPriority.ErrorCritical, "LoadSettingsFile: File create failed. Path might not be writeable: {0}", fullFileName);
+                }
                 return false;
             }
             return true;

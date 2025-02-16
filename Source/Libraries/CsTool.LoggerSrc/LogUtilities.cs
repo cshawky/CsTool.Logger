@@ -66,6 +66,7 @@ namespace CsTool.Logger
         /// The name of the application that is using this toolset.
         /// </summary>
         /// <remarks>TODO Provide .NET core cross platform compatibility</remarks>
+        public static string ProcessName => MyProcessName;
         public static string MyProcessName
         {
             get

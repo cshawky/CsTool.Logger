@@ -97,6 +97,36 @@
     [ModelSettingsClass]
     public class SampleModelSettings // If using CoreUtilities should inherit DefaultSettings
     {
+
+        /// <summary>
+        /// The Name that uses this configuration settings data set.
+        /// This property is always first in the configuration file.
+        /// Use of this property name is optional.
+        /// </summary>
+        [ModelSettingsProperty]
+        public string Name { get; set; } = "Settings1";
+
+        /// <summary>
+        /// An arbitrary number for the property section. It could be used as an index id
+        /// Use of this property name is optional.
+        /// </summary>
+        [ModelSettingsProperty]
+        public int Id { get; set; } = 1;
+
+        /// <summary>
+        /// Settings section Description. Appears after name.
+        /// Use of this property name is optional.
+        /// </summary>
+        [ModelSettingsProperty]
+        public string Description { get; set; } = "Settings Name 1";
+
+        /// <summary>
+        /// Settings section help. Appears after Description
+        /// Use of this property name is optional.
+        /// </summary>
+        [ModelSettingsProperty]
+        public string Help { get; set; } = "\nThis is a sample Xml Settings file from CsTool.Logger.\nEnjoy!";
+
         /// <summary>
         /// A standard string settings property.
         /// </summary>
@@ -115,6 +145,10 @@
         [ModelSettingsProperty]
         public List<int> ValueList { get; set; } = new List<int> { 1, 2, 3, 4, 5 };
 
+        /// <summary>
+        /// ModelSettingsInstance results in the instance being saved in Group 3 of the section
+        /// Use ModelSettingsProperty to include in alphabetical order with the rest of the properties.
+        /// </summary>
         [ModelSettingsInstance]
         public AnotherSettingsClass AnotherSetting { get; set; } = new AnotherSettingsClass();
     }

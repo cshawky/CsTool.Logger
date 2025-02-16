@@ -138,7 +138,7 @@ namespace CsTool.Logger
         /// If date stamping is disabled this is the file name excluding extension.</param>
         /// <param name="enableUserName">If true, the user name is appended to the file name.</param>
         /// <param name="fileNameDateTime">The date format to append to the file name.</param>
-        public LogBase(string newFilePrependText, bool enableUserName, string fileNameDateTime)
+        public LogBase(string newFilePrependText, bool enableUserName = false, string fileNameDateTime = null)
         {
             lock (padLockProperties)
             {
@@ -250,6 +250,12 @@ namespace CsTool.Logger
                 Logger.Write(exception, "LogUIThreadException");
             else
                 Log.Write(exception, "LogUIThreadException");
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

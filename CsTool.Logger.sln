@@ -41,6 +41,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "~Doc", "~Doc", "{AEE45B3A-6
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.LoggerXml", "Framework\Tests\Test.LoggerXml\Test.LoggerXml.csproj", "{5CEF2430-291D-44BD-928F-445BB48B2A71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,14 @@ Global
 		{622C5040-050A-4C60-ACC9-C31B930ED464}.Release|Any CPU.Build.0 = Release|Any CPU
 		{622C5040-050A-4C60-ACC9-C31B930ED464}.Release|x64.ActiveCfg = Release|x64
 		{622C5040-050A-4C60-ACC9-C31B930ED464}.Release|x64.Build.0 = Release|x64
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Debug|x64.Build.0 = Debug|Any CPU
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Release|x64.ActiveCfg = Release|Any CPU
+		{5CEF2430-291D-44BD-928F-445BB48B2A71}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,6 +117,7 @@ Global
 		{642B8712-208B-47FE-A495-D1F974D1A16D} = {650002C9-E42B-4556-9F4E-64225B84F36D}
 		{32CA3D74-BE4B-444A-B85F-0C1A0FF55644} = {C99201EC-4467-4041-9438-852D599E478F}
 		{622C5040-050A-4C60-ACC9-C31B930ED464} = {C99201EC-4467-4041-9438-852D599E478F}
+		{5CEF2430-291D-44BD-928F-445BB48B2A71} = {C99201EC-4467-4041-9438-852D599E478F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C4E42304-91FB-4184-87BD-986E35FA0740}

@@ -202,15 +202,6 @@ namespace CsTool.Logger
         [ModelSettingsProperty]
         public DebugThresholdLevel LogThresholdMaxLevel { get; set; } = DebugThresholdLevel.LogInfo;
 
-#if TEST_NEW_MODEL_SETTINGS
-        /// <summary>   
-        /// Development testing of the new ModelSettings feature making use of Attributes to automatically add properties
-        /// to the settings file.
-        /// </summary>
-        [ModelSettingsInstance]
-        public SampleModelSettings SampleSettings { get; set; } = new SampleModelSettings();
-#endif // TEST_NEW_MODEL_SETTINGS
-
         #endregion ModelSettings Properties
 
         //

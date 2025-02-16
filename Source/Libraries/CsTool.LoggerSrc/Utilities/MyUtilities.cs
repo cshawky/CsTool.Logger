@@ -90,5 +90,34 @@
         }
 
         #endregion Environment Variables Substitution
+
+        #region File Utilities
+
+        /// <summary>
+        /// Check if the given folder path is writeable.
+        /// </summary>
+        /// <param name="path">The folder path excluding file name</param>
+        /// <returns>True if the path is writeable</returns>
+        public static bool IsPathWriteable(string path)
+        {
+            try
+            {
+                // Combine the path with a temporary file name
+                string tempFilePath = Path.Combine(path, Path.GetRandomFileName());
+
+                // Create and delete the temporary file
+                using (FileStream fs = File.Create(tempFilePath, 1, FileOptions.DeleteOnClose))
+                {
+                    // If we reach here, the path is writeable
+                    return true;
+                }
+            }
+            catch
+            {
+                // If an exception is thrown, the path is not writeable
+                return false;
+            }
+        }
+        #endregion File Utilities
     }
 }

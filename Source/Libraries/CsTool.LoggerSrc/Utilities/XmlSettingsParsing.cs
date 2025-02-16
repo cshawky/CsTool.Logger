@@ -117,8 +117,8 @@
                 if (type.IsClass)
                 {
                     // get attributes from class
-                    var modelSettingsAttribute1 = propertyValue.GetType().GetCustomAttribute<ModelSettingsClassAttribute>();
-                    var modelSettingsAttribute2 = propertyValue.GetType().GetCustomAttribute<ModelSettingsInstanceAttribute>();
+                    var modelSettingsAttribute1 = type.GetCustomAttribute<ModelSettingsClassAttribute>();
+                    var modelSettingsAttribute2 = type.GetCustomAttribute<ModelSettingsInstanceAttribute>();
                     if (modelSettingsAttribute1 != null || modelSettingsAttribute2 != null)
                     {
                         // Create child XElement containing all properties of this class instance
@@ -147,7 +147,7 @@
 
                 //
                 // Export the List<T> as a series of elements
-                if (type.Name.StartsWith("List"))
+                if (typeName.StartsWith("List"))
                 {
                     Int32 i = 0;
                     int count = 0;
@@ -159,7 +159,7 @@
                             count++;
                         }
                         var elementType = propertyValueList.GetType().GetGenericArguments()[0];
-                        XElement xList = new XElement(propertyName
+                        XElement xList = new XElement(propertyName + "T"
                             , new XAttribute("count", count)
                             , new XAttribute("type", propertyValueList.GetType().Name)
                             , new XAttribute("elementType",elementType.Name));
@@ -283,10 +283,26 @@
             try
             {
                 //
-                // Sort all of the properties of interest
+                // TODO Properties may be grouped into multiple parts
+                //      Group 1: Optional Reserved Properties for the top of the section:
+                //          Id
+                //          Name
+                //          Description
+                //          Help
+                //      Group 2: (Sorted Alphabetically)
+                //          ModelSettingsProperty and ModelSettingsPropertyWithSubstitutions
+                //          Excludes properties that are classes and lists
+                //      Group 3: (Sorted Alphabetically)
+                //          Lists of ModelSettingsProperty or ModelSettingsInstance
+                //      Group 4: Stored in order of instantiation in the class
+                //          ModelSettingsInstance Properties
                 //
                 SortedDictionary<string, PropertyInfo> propertyList = new SortedDictionary<string, PropertyInfo>();
+
                 PropertyInfo[] properties = logBasePropertiesType.GetProperties();
+
+                int order = 1;
+
                 foreach (PropertyInfo property in properties)
                 {
                     // Only include properties that are read/write and not null, public and ModelSettingsPropertyAttribute
@@ -295,7 +311,39 @@
                                     || property.GetCustomAttribute<ModelSettingsPropertyWithSubstitutionsAttribute>() != null;
                     if (property.PropertyType.IsPublic && isSetting)
                     {
-                        propertyList.Add(property.Name, property);
+                        if (property.GetCustomAttribute<ModelSettingsInstanceAttribute>() != null)
+                        {
+                            // Group 3: The class implementation dictates the order of the properties
+                            propertyList.Add("4-" + order.ToString("00000"), property);
+                            order++;
+                            continue;
+                        }
+                        Type type = property.PropertyType;
+                        if (type.Name.StartsWith("List"))
+                        {
+                            propertyList.Add("3-01" + property.Name, property);
+                            continue;
+                        }
+                        switch (property.Name)
+                        {
+                            // Group 1: The order of predefined properties is hard coded here
+                            case "Id":
+                                propertyList.Add("1-01", property);
+                                break;
+                            case "Name":
+                                propertyList.Add("1-02", property);
+                                break;
+                            case "Description":
+                                propertyList.Add("1-03", property);
+                                break;
+                            case "Help":
+                                propertyList.Add("1-04", property);
+                                break;
+                            default:
+                                // Group 2: All other properties are added in alphabetical sort order
+                                propertyList.Add("2-" + property.Name, property);
+                                break;
+                        }
                     }
                 }
 
@@ -419,12 +467,15 @@
                         }
                         continue;
                     }
+
                     // Looking for ModelSettingsClass instances to process
                     if (property.PropertyType.IsPublic && property.GetCustomAttribute<ModelSettingsInstanceAttribute>() != null)
                     {
                         try
                         {
-                            XElement xmlSubSection = settingsSection.Element(property.Name);
+                            string propertyName = property.PropertyType.Name.StartsWith("List") ? property.Name + "T" : property.Name;
+
+                            XElement xmlSubSection = settingsSection.Element(propertyName);
                             if (xmlSubSection == null)
                             {
                                 Log.Write("Warning: CsTool.Logger.LoadClassValues: Class({0}) properties not found in settings file", property.Name);
@@ -467,20 +518,24 @@
         {
             // Object Type
             Type type = propertyInfo.PropertyType;
+            string typeName = type.Name;
             object result = propertyInfo.GetValue(classInstance);
             try
             {
-                XElement element = settingsSection.Element(propertyInfo.Name);
+                string propertyName = typeName.StartsWith("List") ? propertyInfo.Name + "T" : propertyInfo.Name;
+
+                XElement element = settingsSection.Element(propertyName);
                 if (element == null)
                 {
                     errors++;
+                    Log.Write(LogPriority.Verbose, "CsTool.Logger.GetPropertyAsType: Property({0}) not found in settings file", propertyName);
                     return result;
                 }
 
                 //
                 // Process List<T>
                 //
-                if (propertyInfo.PropertyType.Name.StartsWith("List"))
+                if (typeName.StartsWith("List"))
                 {
                     return GetPropertyAsList(settingsSection, propertyInfo, classInstance, ref errors);
                 }
@@ -522,13 +577,18 @@
             if (!propertyInfo.PropertyType.Name.StartsWith("List"))
             {
                 errors++;
+                Log.Write(LogPriority.Verbose, "Warning: CsTool.Logger.GetPropertyAsList: Property({0}) is not a List", propertyInfo.Name);
                 return result;
             }
 
             try
             {
-                XElement element = settingsSection.Element(propertyInfo.Name);
-                if (element == null) return result;
+                XElement element = settingsSection.Element(propertyInfo.Name + "T");
+                if (element == null)
+                {
+                    Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) not found", propertyInfo.Name);
+                    return result;
+                }
                 int count = 0;
                 count = Convert.ToInt32(element.Attribute("count")?.Value);
                 Type elementType = result.GetType().GetGenericArguments()[0];
@@ -538,6 +598,11 @@
 
                 foreach (XElement subElement in element.Elements(propertyInfo.Name))
                 {
+                    if ( subElement.HasElements)
+                    {
+                        Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has sub elements. Currently unsupported", propertyInfo.Name);
+                        continue;
+                    }
                     string tempString3 = subElement.Value.ToString();
                     var convertedValue = converter.ConvertFromString(tempString3);
                     try
