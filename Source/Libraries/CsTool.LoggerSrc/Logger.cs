@@ -20,7 +20,7 @@ namespace CsTool.Logger
     /// for independent logging streams.
     /// In theory (not validated), one may also extend the LogBase or Logger classes for your own needs.
     /// </summary>
-    public partial class Logger
+    public sealed partial class Logger
     {
         //
         // -----------------------------------------------------------------------------------------
@@ -44,26 +44,43 @@ namespace CsTool.Logger
         /// logger1.Write("Hello World");
         /// logger2.Write("Hello World");
         /// </code>
-
         /// </summary>
         /// <remarks>
         /// Updated Aug 2024 to take advantage of lazy initialisation over thread locking or simple static initialisation.
         /// Original source: https://www.dotnetperls.com (actual article no longer available) for reasons 
         /// why the singleton approach has been used. The author's code base has used Singleton for many years with much success
         /// except for the rare start up race condition. Code tweaks and the use of Lazy<> and locks tidies it up nicely.
+        /// Part of that article is now available at http://www.dotnetperls.com/static and other sections for reasons why the singleton approach has been used.
+        /// - "static readonly" thread safety
+        /// - other resources indicate having a public property  get is not needed
+        /// 
+        /// https://csharpindepth.com/Articles/Singleton (Fourth version, not quite lazy but thread-safe without using locks - yah)
+        /// - instance can be public static readonly, no property needed. Super simples. Key is static readonly on Instance. Having
+        /// a static private empty constructor is not necessary as we are aiming for Lazy instantiation.
+        /// 
+        /// So why do we need Lazy given all the information above? I have no idea, for now we have it and it works. We do not need
+        /// a super efficient initialisation interface as it is once only.
+        /// 
         /// Smarter Lazy: https://thecodeman.net/posts/how-to-use-singleton-in-multithreading
-        /// Alternative popular double locking: 
+        /// Alternative popular double locking:
+        ///      ** https://csharpindepth.com/Articles/Singleton
         ///         https://www.c-sharpcorner.com/article/singleton-design-pattern-in-c-sharp-part-one/
         ///         https://medium.com/@mitesh_shah/improvements-and-implementations-of-the-singleton-pattern-53365c2e19e
         ///         https://resulhsn.medium.com/better-implementation-of-singleton-pattern-in-net-167b3299b478
-        /// We don't need everything and simplicity is the key.
-        /// Also, we want the Singleton Logger to be initialised early as we expect it to be available early and live late
-        /// to get all pending logs written to file (a work in progress).
+        ///
+        /// We don't need everything and simplicity is the key. But from the csharpindepth article, it appears the safest and
+        /// recommended approach is Method 6, or method 5. We are now using method 6 as per new developer advice. I like method 5
+        /// and used method 4 in the past without issue. 
         /// 
-        /// The instance was originally accessed like but initialisation was not thread safe. Good for most applications.
+        /// We want the Singleton Logger to be initialised early as we expect it to be available early and live late
+        /// to get all pending logs written to file (a work in progress). I am not sure if the early initialisation is achieved.
+        /// To assist when time permits, the raw log interface Log.Write is available for early logging.
+        /// 
+        /// The instance was originally accessed like this, but initialisation was not thread safe. Good for most applications.
         /// <code>
         ///     public static readonly LogBase Instance = new LogBase();
         /// </code>
+        /// 
         /// But now the preference is to use built in thread safety through Lazy<> then apply locking mechanisms for the data
         /// only when necessary (improvements could be applied still).
         /// 
@@ -71,6 +88,11 @@ namespace CsTool.Logger
         ///     private static readonly Lazy<LogBase> instance = new Lazy<LogBase>(() => new LogBase());
         ///     public static LogBase Instance { get => instance.Value; }
         /// </code>
+        /// 
+        /// The use of <code>sealed class Logger</code> is to prevent inheritance of the Singleton instance class. It's inclusion is questionable.
+        /// 
+        /// Testing Status: Concurrency issues cannot be produced. Initialisation seems to work fine though during debug trapping
+        /// there can be an issue. Ideally we want the class to be initialised as early as possible.
         /// </remarks>
         private static readonly Lazy<LogBase> instance = new Lazy<LogBase>(() => new LogBase());
 
