@@ -136,7 +136,7 @@
         [ModelSettingsProperty]
         public int StandardInt { get; set; } = 42;
 
-        [ModelSettingsProperty]
+        [ModelSettingsPropertyWithSubstitutions]
         public List<string> StringList { get; set; } = new List<string> { "Value1", "Value2", @"C:\ProgramData\TestFolder" };
 
         [ModelSettingsProperty]
@@ -177,7 +177,7 @@
         /// <summary>
         /// Include as a property. Arrays are supported.
         /// </summary>
-        [ModelSettingsProperty]
+        [ModelSettingsPropertyWithSubstitutions]
         public List<string> StringList2 { get; set; } = new List<string> { "Value21", "Value22", "C:\\ProgramData\\TestFolder2" };
 
         /// <summary>
@@ -185,6 +185,5 @@
         /// </summary>
         [ModelSettingsProperty]
         public List<int> ValueList2 { get; set; } = new List<int> { 21, 22, 23, 24, 25 };
-
     }
 }

@@ -46,13 +46,21 @@ namespace CsTool.Logger
         /// </code>
         /// </summary>
         /// <remarks>
+        /// --------------------------------------------------------------------------------------------------------------------------
+        /// Reference information for the use of a Singleton Instance rather than a static class.
+        /// --------------------------------------------------------------------------------------------------------------------------
         /// Updated Aug 2024 to take advantage of lazy initialisation over thread locking or simple static initialisation.
         /// Original source: https://www.dotnetperls.com (actual article no longer available) for reasons 
         /// why the singleton approach has been used. The author's code base has used Singleton for many years with much success
-        /// except for the rare start up race condition. Code tweaks and the use of Lazy<> and locks tidies it up nicely.
-        /// Part of that article is now available at http://www.dotnetperls.com/static and other sections for reasons why the singleton approach has been used.
+        /// except for the rare start up race condition. Code tweaks and the use of Lazy<> and locks seems to tidy this up nicely.
+        /// 
+        /// Part of the original dotnetperls article is still available at http://www.dotnetperls.com/static and other sections for 
+        /// reasons why the singleton approach has been used.
         /// - "static readonly" thread safety
         /// - other resources indicate having a public property  get is not needed
+        ///
+        /// CSharpInDepth also has an excellent article on the topic. CsTool original approach was fine, though inclusion of Lazy is an
+        /// improvement tweak based on more recent implementation approaches. The aim here is for consistency across the code platform.
         /// 
         /// https://csharpindepth.com/Articles/Singleton (Fourth version, not quite lazy but thread-safe without using locks - yah)
         /// - instance can be public static readonly, no property needed. Super simples. Key is static readonly on Instance. Having

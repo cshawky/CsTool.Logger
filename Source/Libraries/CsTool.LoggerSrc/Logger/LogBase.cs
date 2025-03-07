@@ -125,7 +125,6 @@ namespace CsTool.Logger
                     AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(LogUnhandledException);
                     IsExceptionHandlerRegistered = true;
                 }
-
                 InitialiseLog();
             }
         }
@@ -493,7 +492,7 @@ namespace CsTool.Logger
             }
             catch (Exception)
             {
-                Log.Write(LogPriority.Warning, "CheckLogFileIsWriteable: Log file({0}) is not writeable", fullFileName);
+                Log.Write(LogPriority.Warning, "CheckLogFileIsWriteable: Unique logfile name({0}) is not writeable", fullFileName);
             }
             return false;
         }
