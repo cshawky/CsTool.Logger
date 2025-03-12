@@ -380,6 +380,13 @@ To name a few:
 * NuGet packaging for simpler support on multiple dotnet frameworks
 * It looks like some of the Logger tuning parameters have not been exposed properly so you may not be able to change the log priority. Might be fixed.
 * Log counters do not generated GUI events.
+* The XML Configuration now allows user DLLs, methods to create their own section in a single application
+  settings file based on class attributes with no custom code. I feel this is significant, but it is still immature as a
+  public release. What is implemented does work. Some further improvement possible to make it as abstract and
+  seamless as possible to the coder. No documentation...
+* Logging statistics are still immature compared to my old C implementation. But not as relevant these days.
+* I'm still not 100% happy with DotNet and programme shut down. Wouldn't it be nice if you could guarantee the
+  logger was the last module to die and thus have everything else logged.
 
 # Release Summary
 
@@ -400,3 +407,8 @@ To name a few:
 * Restored some old Windows Forms dialogue box support to allow old projects to utilise the latest library. The CsTool.Wpf project is not ready for release as a full Wpf replacement to any forms interfaces.
 * Added an exception if a new logger is initialised incorrectly. i.e. Do not do: Logger myLogger2 = new Logger("Logger2"); Instead use LogBase myLogger2 = new LogBase("Logger2");
 * Registered on NuGet, looking into packaging, but would like to make this multi framework supportable in the build.
+
+2025
+* The XML Configuration file interface is cool, but needs documenting and a little more finess with an example.
+* Tweaks to Singleton instance in line with more recent C# practices.
+
