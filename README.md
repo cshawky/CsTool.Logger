@@ -374,6 +374,51 @@ The enumerations are described below as excerpt from LogPriority.cs
     }
 ```
 
+# Application Defaults
+The XmlSettingsParsing class provides a generic interface that allows for class based settings to be retrieved and saved
+to the AppDefaults file. Abstraction is achieved using Class custom attributes.
+
+```C#
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Settings version="2.0.0" lastsaved="11/04/2025 4:00:39 PM +10:00">
+  <AppDefaults>
+    <CsTool.Logger>
+      <LogBase class="LogBase" version="1.0.0" lastsaved="11/04/2025 4:00:40 PM +10:00">
+        <CountLoggedMessagesMaximum>100000</CountLoggedMessagesMaximum>
+        <CountOldLogFilesToKeep>20</CountOldLogFilesToKeep>
+        <FileNameDateFormat></FileNameDateFormat>
+        <FilePrepend>%APPNAME%</FilePrepend>
+        <IsConsoleLoggingEnabled>False</IsConsoleLoggingEnabled>
+        <IsLoseMessageOnBufferFull>False</IsLoseMessageOnBufferFull>
+        <IsShowMessagesEnabledByDefault>False</IsShowMessagesEnabledByDefault>
+        <IsUserNameAppended>True</IsUserNameAppended>
+        <LogFilePath>%TEMP%\Logs\%APPNAME%</LogFilePath>
+        <LogThresholdMaxLevel-Help usage="LogFatal LogImportantInfo LogCritical LogError LogWarning LogInfo LogDebug LogVerbose" />
+        <LogThresholdMaxLevel>LogVerbose</LogThresholdMaxLevel>
+      </LogBase>
+    </CsTool.Logger>
+    <MyApp.MyLibrary.MyModel>
+      <MyModelSettings class="MyModelSettings" version="1.0.0" lastsaved="11/04/2025 4:35:14 PM +10:00">
+        <Name>Hello</Name>
+        <Description>Parameters for tuning this model.</Description>
+        <ConfigFileName>Info from a spreadsheet.xlsx</ConfigFileName>
+        <ConfigPath>%STARTUPDIR%\Resources</ConfigPath>
+        <UserPath>%DROPBOX%\Documents\Stuff</UserPath>
+        <IsAutoLoad>True</IsAutoLoad>
+        <IsAutoSave>False</IsAutoSave>
+        <ItemsT count="5" type="List`1" elementType="System.Int32">
+          <Items>1</Items>
+          <Items>2</Items>
+          <Items>3</Items>
+          <Items>4</Items>
+          <Items>5</Items>
+        </ItemsT>
+      </MyModelSettings>
+    </MyApp.MyLibrary.MyModel>
+  </AppDefaults>
+</Settings>
+```
+
 # TODO List
 
 To name a few:
