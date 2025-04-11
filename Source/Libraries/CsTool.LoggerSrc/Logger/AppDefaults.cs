@@ -50,19 +50,34 @@
         /// <summary>
         /// For CsTool.Logger compatibility, the default application file must be named as follows:
         ///  ApplicationName.AppDefaults.xml
-        /// To ensure the file name conforms, use method <code>GetAppDefaultsFileName</code> 
+        /// To ensure the file name conforms, use method <code>AppDefaultsFileName</code> 
         /// </summary>
         public const string DefaultXmlSectionName = "AppDefaults";
+
+        /// <summary>
+        /// Private field for <code>AppDefaultsFileName</code>
+        /// </summary>
+        private static String appDefaultsFileName = LogUtilities.MyProcessName + "." + DefaultXmlSectionName + ".xml";
 
         /// <summary>
         /// If you wish to include logging properties in your application defaults file, you can use this method
         /// to define the correct file name. This enables application specific logging settings.
         /// </summary>
         /// <returns>The Filename and extension for the defaults xml file</returns>
-        public static string GetAppDefaultsFileName()
-        {
-            return LogUtilities.MyProcessName + "." + DefaultXmlSectionName + ".xml";
-        }
+        public static string AppDefaultsFileName => appDefaultsFileName;
+
+        /// <summary>
+        /// Private field for <code>AppDefaultsSystemFilePath</code>
+        /// </summary>
+        private static String appDefaultsSystemFilePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+
+        /// <summary>
+        /// The full path to the application defaults file in the application executable folder. 
+        /// This is the folder location of the programme executable.
+        /// For the user editable settings
+        /// file refer to AppDefaultsLocalFullFilePath.
+        public static String AppDefaultsSystemFilePath => appDefaultsSystemFilePath;
+
         #endregion App Defaults
 
         /// <summary>
@@ -76,6 +91,16 @@
             XElement xList = XmlSettingsParsing.AddClass(null, classInstance, version);
             if (xList != null && xList.Descendants().Count() > 0) return xList;
             return null;
+        }
+
+        /// <summary>
+        /// Allow reload of the Logger settings from the application defaults file.
+        /// </summary>
+        /// <returns>True</returns>
+        public bool LoadSettings()
+        {
+            // Load the settings from the application defaults file
+            return LoadAppDefaults(this, "1.0.0", AppDefaultsFileName, true, true);
         }
 
         /// <summary>
@@ -99,13 +124,11 @@
             if (classInstance == null) classInstance = this;
 
             if (fileName == null)
-                fileName = GetAppDefaultsFileName();
+                fileName = AppDefaultsFileName;
             //
             // Load settings from the application folder
             //
-            string sourcePath = Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
-            string sourceFile = sourcePath + "\\" + fileName;
-
+            string sourceFile = AppDefaultsSystemFilePath + "\\" + fileName;
             bool result = LoadSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
 
             //
@@ -279,6 +302,44 @@
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Save the application settings for the specified settings class instance to the application startup folder. The class specific
+        /// settings will be merged with the existing file.
+        /// </summary>
+        /// <param name="classInstance"></param>
+        /// <param name="version"></param>
+        /// <param name="fileName"></param>
+        /// <param name="createIfMissing"></param>
+        /// <param name="updateIfNeeded"></param>
+        /// <returns></returns>
+        public bool SaveAppDefaults(object classInstance, string version = "1.0.0", string fileName = null,
+            bool createIfMissing = true, bool updateIfNeeded = true)
+        {
+            if (classInstance == null) classInstance = this;
+
+            if (fileName == null)
+                fileName = AppDefaultsFileName;
+            //
+            // Save settings to the application folder
+            //
+            string sourceFile = AppDefaultsSystemFilePath + "\\" + fileName;
+
+            bool result = false;
+            // TODO Not implemented
+            Logger.Write(LogPriority.Warning, "SaveAppDefaults: Not implemented");
+
+            //bool result = SaveSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
+
+            //
+            // Save settings from the startup folder
+            //
+            // Set sourcePath to the current directory
+            sourceFile = LogUtilities.MyStartupPath + "\\" + fileName;
+            //result = SaveSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
+
+            return result;
         }
     }
 }

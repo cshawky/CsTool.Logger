@@ -162,7 +162,7 @@
                         XElement xList = new XElement(propertyName + "T"
                             , new XAttribute("count", count)
                             , new XAttribute("type", propertyValueList.GetType().Name)
-                            , new XAttribute("elementType",elementType.Name));
+                            , new XAttribute("elementType",elementType.FullName));
 
                         foreach (object element in propertyValueList)
                         {
@@ -591,7 +591,24 @@
                 }
                 int count = 0;
                 count = Convert.ToInt32(element.Attribute("count")?.Value);
-                Type elementType = result.GetType().GetGenericArguments()[0];
+                string typeName = element.Attribute("elementType")?.Value;
+                Type elementType = Type.GetType("System.Int32");
+
+                // convert typeName to Type
+                if (string.IsNullOrWhiteSpace(typeName))
+                {
+                    Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has no elementType, assuming int", propertyInfo.Name);
+                }
+                else
+                {
+                    // GetType expects the full type name like System.Int32, not just Int32
+                    elementType = Type.GetType(typeName);
+                    if (elementType == null)
+                    {
+                        Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has unknown elementType", propertyInfo.Name);
+                        return result;
+                    }
+                }
                 var converter = TypeDescriptor.GetConverter(elementType);
                 var listType = typeof(List<>).MakeGenericType(elementType);
                 var list = (IList)Activator.CreateInstance(listType);

@@ -14,7 +14,7 @@ namespace CsTool.Logger
 
     /// <summary>
     /// The most basic of loggers. Use this implementation as the log of last resort. It is not thread safe
-    /// but should work when little else does. The log file is created in the user's %TEMP%\CsTool.Logger folder
+    /// but should work when little else does. The log file is created in the user's %TEMP%\Logs\CsTool.Logger folder
     /// which should be writeable.
     /// </summary>
     /// <remarks>
@@ -23,7 +23,7 @@ namespace CsTool.Logger
     public static class Log
     {
 
-        private static string FullFilePath { get; set; } = Environment.GetEnvironmentVariable("TEMP") + @"\CsTool.Logger"; 
+        private static string FullFilePath { get; set; } = Environment.GetEnvironmentVariable("TEMP") + @"\Logs\CsTool.Logger"; 
 
         private static string FileName { get; set; } = @"CsTool.Logger." + Process.GetCurrentProcess().ProcessName
             .Replace(".vshost", "").Replace("XDesProc", "MyApplication").Replace(".exe", "") + ".log";
@@ -137,7 +137,7 @@ namespace CsTool.Logger
             string memberName = frame.GetMethod().Name;
             int lineNumber = frame.GetFileLineNumber();
             string fileName = frame.GetFileName();
-            messageFormat = string.Format("{0}\n{1}.{2}() Line {3}: {4}", messageFormat, className, memberName, lineNumber, fileName);
+            messageFormat = string.Format("{0}{1}{2}.{3}() Line {4}: {5}", messageFormat, LogBase.LogNewLine, className, memberName, lineNumber, fileName);
 #endif
             WriteIt(logPriority, messageFormat, args);
         }

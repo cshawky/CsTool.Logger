@@ -298,7 +298,7 @@ namespace CsTool.Logger
                     if (streamWriter != null)
                     {
                         streamWriter.Write(
-                        "\n============================== Logging stopped : {0:yyyy-MMM-dd ddd HH:mm:ss} : Shutdown requested =====================",
+                        "\n============================== Logging stopped : {0:yyyy-MMM-dd ddd HH:mm:ss.fff} : Shutdown requested =====================",
                         DateTimeOffset.Now);
                     }
                     CloseAndFlush();
@@ -371,6 +371,7 @@ namespace CsTool.Logger
                 {
                     LogQueuedMessage(p);
                 }
+                Logger.Write(LogPriority.Always, "ConsumeMessages: Exiting background task!");
             }, CancellationToken.None, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
         }
 
@@ -584,7 +585,7 @@ namespace CsTool.Logger
                     {
                         DateTimeOffset date = DateTimeOffset.Now;
                         streamWriter.Write(
-                            "\n============================== Logging started : {0:yyyy-MMM-dd ddd HH:mm:ss} : {1} =====================\n\n",
+                            "\n============================== Logging started : {0:yyyy-MMM-dd ddd HH:mm:ss.fff} : {1} =====================\n\n",
                             date, newFileReason);
                         streamWriter.Flush();
                     }

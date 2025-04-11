@@ -22,18 +22,19 @@
         /// Fake environment variable to represent the current directory. Supported by CsTool.CoreUtilities.Utilities.ExpandEnvironmentVariables()
         /// and InsertEnvironmentVariables(). CsTool.Logger needs the same methods but cannot call CoreUtilities. Therefore duplicated here.
         /// </summary>
-        private const string CurrentDirectoryEnvVar = "%STARTUPDIR%";
-        private const string AppNameEnvVar = "%APPNAME%";
+        public const string CurrentDirectoryEnvVar = "%STARTUPDIR%";
+        public const string AppNameEnvVar = "%APPNAME%";
+        public const string ExecutablePathEnvVar = "%ExecutablePath%";
 
         /// <summary>
-        /// Environment variables that can be substituted in file paths.
+        /// Environment variables that can be substituted in file paths in priority order
         /// </summary>
         public static string[] SupportedEnvironmentVariables = new string[] { "%TEMP%", "%TMP%", "%LOCALAPPDATA%", "%OneDrive%", "%USERPROFILE%",
                                                                             "%APPDATA%", "%PUBLIC%",
                                                                             "%ProgramData%", "%ALLUSERSPROFILE%", 
                                                                             "%ProgramFiles(x86)%", "%ProgramFiles%",
                                                                             CurrentDirectoryEnvVar, "%USERNAME%", "%COMPUTERNAME%",
-                                                                            AppNameEnvVar};
+                                                                            AppNameEnvVar, ExecutablePathEnvVar};
 
         /// <summary>
         /// Replace all environment variables including the internal variable substitutions
@@ -47,7 +48,8 @@
             string expandedPath = Environment.ExpandEnvironmentVariables(compactedPath);
             expandedPath = expandedPath
                             .Replace(CurrentDirectoryEnvVar, Environment.CurrentDirectory)
-                            .Replace(AppNameEnvVar, LogUtilities.MyProcessName);
+                            .Replace(AppNameEnvVar, LogUtilities.MyProcessName)
+                            .Replace(ExecutablePathEnvVar,LogBase.AppDefaultsSystemFilePath);
             //Logger.Write("ExpandEnvironmentVariables:\n   {0}\n-> {1}", compactedPath, expandedPath);
             return expandedPath;
         }

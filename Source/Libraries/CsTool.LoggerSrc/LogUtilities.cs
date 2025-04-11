@@ -57,6 +57,15 @@ namespace CsTool.Logger
         /// </summary>
         private static readonly object padlock = new object();
 
+        public const string CurrentDirectoryEnvVar = Utilities.MyUtilities.CurrentDirectoryEnvVar;
+        public const string AppNameEnvVar = Utilities.MyUtilities.AppNameEnvVar;
+        public const string ExecutablePathEnvVar = Utilities.MyUtilities.ExecutablePathEnvVar;
+
+        /// <summary>
+        /// Environment variables that can be substituted in file paths in priority order
+        /// </summary>
+        public static string[] SupportedEnvironmentVariables = Utilities.MyUtilities.SupportedEnvironmentVariables;
+
         /// <summary>
         /// The name of the application that is using this toolset.
         /// </summary>
@@ -193,6 +202,7 @@ namespace CsTool.Logger
             //
             if (IsPathReserved(path))
             {
+                string preferredPath = Path.GetFileNameWithoutExtension(path);
                 path = Environment.GetEnvironmentVariable("TEMP");
                 //Log.Write("GetWriteablePath: Check path {0}", path);
                 if (IsPathReserved(path))
@@ -204,7 +214,7 @@ namespace CsTool.Logger
                         throw new DirectoryNotFoundException("The application could not find a suitable log path to write to. Please ensure that the startup path, %TEMP% path or Desktop path are writeable");
                     }
                 }
-                path += @"\" + MyProcessName;
+                path += @"\" + preferredPath + @"\" + MyProcessName;
                 //Log.Write("GetWriteablePath: Check path {0}", path);
                 if (IsPathReserved(path))
                 {

@@ -222,6 +222,7 @@ namespace CsTool.Logger
         public static bool IsLogPriorityEnabled(LogPriority level) => Instance.IsLogPriorityEnabled(level);
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
+        public static bool LoadSettings() => Instance.LoadSettings();
 
         /// <summary>
         /// Set the base directory for all logging. The default location is {StartupPath}\Logs.
@@ -232,6 +233,7 @@ namespace CsTool.Logger
         public static void Write(LogPriority level, string messageFormat) => Instance.Write(level, messageFormat);
         public static void Write(LogPriority level, string messageFormat, params object[] propertyValues) => Instance.Write(level, messageFormat, propertyValues);
         public static void Write(LogPriority level, string messageFormat, NameValueCollection parameters) => Instance.Write(level, messageFormat, parameters);
+        public static void WriteRaw(string rawMessage, params object[] args) => Instance.WriteRaw(LogPriority.Info, rawMessage, args);
         public static void WriteRaw(LogPriority level, string rawMessage, params object[] args) => Instance.WriteRaw(level, rawMessage, args);
         public static void Write(Exception exception) => Instance.Write(exception);
         public static void Write(Exception exception, string messageFormat) => Instance.Write(LogPriority.Fatal, exception, messageFormat);
@@ -334,13 +336,6 @@ namespace CsTool.Logger
         // -----------------------------------------------------------------------------------------
         //
         #region Configuration File Interface Methods
-
-        /// <summary>
-        /// If you wish to include logging properties in your application defaults file, you can use this method
-        /// to define the correct file name. This enables application specific logging settings.
-        /// </summary>
-        /// <returns>The Filename and extension for the defaults xml file</returns>
-        public static string GetAppDefaultsFileName() => LogBase.GetAppDefaultsFileName();
 
         /// <summary>
         /// Add the configuration properties to your application defaults file.
