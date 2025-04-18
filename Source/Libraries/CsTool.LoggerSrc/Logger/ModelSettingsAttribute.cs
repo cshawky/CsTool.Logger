@@ -81,10 +81,10 @@
     /// Apply this attribute to any public property in a class to provide an display order for the property.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    public class PropertyColumnOrderAttribute : Attribute
+    public class ViewPropertyColumnAttribute : Attribute
     {
         private int index;
-        public PropertyColumnOrderAttribute(int index = 0)
+        public ViewPropertyColumnAttribute(int index = 0)
         {
             this.index = index;
         }
@@ -97,12 +97,12 @@
     }
 
     /// <summary>
-    /// TESTING: ModelPropertyColumn identifies the property is being imported and exported between internal classes and a data table, typically
-    /// related to import/export to Excel using ClosedXml Tables or other file or database formats.
+    /// ModelPropertyColumn identifies the property is being imported and exported between internal classes 
+    /// and a data table, typically related to import/export to Excel using ClosedXml Tables or other file or database formats.
     /// In addition the Index property provides the same functionality as the ColumnOrder attribute.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    public class ModelPropertyColumnAttribute : PropertyColumnOrderAttribute
+    public class ModelPropertyColumnAttribute : ViewPropertyColumnAttribute
     {
         public ModelPropertyColumnAttribute(int index = 0) : base(index)
         {
