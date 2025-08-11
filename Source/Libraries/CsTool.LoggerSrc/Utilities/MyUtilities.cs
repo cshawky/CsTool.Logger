@@ -25,12 +25,16 @@
         public const string CurrentDirectoryEnvVar = "%STARTUPDIR%";
         public const string AppNameEnvVar = "%APPNAME%";
         public const string ExecutablePathEnvVar = "%ExecutablePath%";
+        public const string DropboxEnvVar = "%Dropbox%";
+        public static string DropboxPath = GetDropboxPath();
 
         /// <summary>
         /// Environment variables that can be substituted in file paths in priority order
         /// </summary>
-        public static string[] SupportedEnvironmentVariables = new string[] { "%TEMP%", "%TMP%", "%LOCALAPPDATA%", "%OneDrive%", "%USERPROFILE%",
+        public static string[] SupportedEnvironmentVariables = new string[] { "%TEMP%", "%TMP%", "%LOCALAPPDATA%", "%USERPROFILE%",
                                                                             "%APPDATA%", "%PUBLIC%",
+                                                                            "%OneDriveCommercial%", "%OneDriveConsumer%","%OneDrive%",
+                                                                            DropboxEnvVar,
                                                                             "%ProgramData%", "%ALLUSERSPROFILE%", 
                                                                             "%ProgramFiles(x86)%", "%ProgramFiles%",
                                                                             CurrentDirectoryEnvVar, "%USERNAME%", "%COMPUTERNAME%",
@@ -49,7 +53,9 @@
             expandedPath = expandedPath
                             .Replace(CurrentDirectoryEnvVar, Environment.CurrentDirectory)
                             .Replace(AppNameEnvVar, LogUtilities.MyProcessName)
-                            .Replace(ExecutablePathEnvVar,LogBase.AppDefaultsSystemFilePath);
+                            .Replace(ExecutablePathEnvVar,LogBase.AppDefaultsSystemFilePath)
+                            .Replace(DropboxEnvVar, DropboxPath);
+
             //Logger.Write("ExpandEnvironmentVariables:\n   {0}\n-> {1}", compactedPath, expandedPath);
             return expandedPath;
         }
@@ -82,6 +88,11 @@
                     compactedPath = compactedPath.Replace(LogUtilities.MyProcessName, variable);
                     continue;
                 }
+                if (variable == DropboxEnvVar)
+                {
+                    compactedPath = compactedPath.Replace(DropboxPath, variable);
+                    continue;
+                }
                 // Replace the destination path as it applies to an environment variable with the individual variable
                 string expandedVariable = Environment.ExpandEnvironmentVariables(variable);
                 compactedPath = compactedPath.Replace(expandedVariable, variable);
@@ -91,6 +102,36 @@
             return compactedPath;
         }
 
+        /// <summary>
+        /// Retrieve the Dropbox path from the info.json file.
+        /// </summary>
+        /// <returns>The path</returns>
+        /// <exception cref="Exception"></exception>
+        /// <remarks>
+        /// Avoid using Newtonsoft.Json
+        /// https://stackoverflow.com/questions/9660280/how-do-i-programmatically-locate-my-dropbox-folder-using-c
+        /// </remarks>
+        public static string GetDropboxPath()
+        {
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+            string[] possiblePaths = {
+                Path.Combine(appDataPath, "Dropbox", "info.json"),
+                Path.Combine(localAppDataPath, "Dropbox", "info.json")
+            };
+
+            foreach (var path in possiblePaths)
+            {
+                if (File.Exists(path))
+                {
+                    string dropBoxPath = File.ReadAllText(path).Split('\"')[5].Replace(@"\\", @"\");
+
+                    return dropBoxPath;
+                }
+            }
+            return String.Empty;
+        }
         #endregion Environment Variables Substitution
 
         #region File Utilities

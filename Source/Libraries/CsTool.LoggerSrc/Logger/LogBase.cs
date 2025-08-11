@@ -367,11 +367,16 @@ namespace CsTool.Logger
         {
             var task = Task.Factory.StartNew(() =>
             {
-                foreach (QueuedMessage p in bc.GetConsumingEnumerable())
+                try
                 {
-                    LogQueuedMessage(p);
+                    foreach (QueuedMessage p in bc.GetConsumingEnumerable())
+                    {
+                        LogQueuedMessage(p);
+                    }
                 }
-                Logger.Write(LogPriority.Always, "ConsumeMessages: Exiting background task!");
+                catch
+                {
+                }
             }, CancellationToken.None, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
         }
 

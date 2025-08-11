@@ -137,7 +137,6 @@
             // set sourcePath to the current directory
             sourceFile = LogUtilities.MyStartupPath + "\\" + fileName;
             result = LoadSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
-
             return result;
         }
 

@@ -185,7 +185,8 @@
                 switch (typeName)
                 {
                     case "String":
-                        string elementValue = MyUtilities.InsertEnvironmentVariables(propertyValue as string);
+                       //string elementValue = MyUtilities.InsertEnvironmentVariables(propertyValue as string);
+                        string elementValue = propertyValue as string;
                         xmlTree.Add(new XElement(propertyName, elementValue));
                         break;
                     default:
