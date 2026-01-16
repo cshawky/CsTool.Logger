@@ -11,6 +11,7 @@ namespace CsTool.Logger
     using System;
     using System.Collections.Specialized;
     using System.Xml.Linq;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// A Singleton instance for the Async/thread safe logger <code>ILogBase</code>.
@@ -20,7 +21,7 @@ namespace CsTool.Logger
     /// for independent logging streams.
     /// In theory (not validated), one may also extend the LogBase or Logger classes for your own needs.
     /// </summary>
-    public sealed partial class Logger
+    public sealed partial class Logger : IDisposable
     {
         //
         // -----------------------------------------------------------------------------------------
@@ -57,7 +58,7 @@ namespace CsTool.Logger
         /// Part of the original dotnetperls article is still available at http://www.dotnetperls.com/static and other sections for 
         /// reasons why the singleton approach has been used.
         /// - "static readonly" thread safety
-        /// - other resources indicate having a public property  get is not needed
+        /// - other resources indicate having a public property get is not needed
         ///
         /// CSharpInDepth also has an excellent article on the topic. CsTool original approach was fine, though inclusion of Lazy is an
         /// improvement tweak based on more recent implementation approaches. The aim here is for consistency across the code platform.
@@ -99,10 +100,17 @@ namespace CsTool.Logger
         /// 
         /// The use of <code>sealed class Logger</code> is to prevent inheritance of the Singleton instance class. It's inclusion is questionable.
         /// 
-        /// Testing Status: Concurrency issues cannot be produced. Initialisation seems to work fine though during debug trapping
+        /// Testing Status Nov 2025: Concurrency issues cannot be produced. Initialisation seems to work fine though during debug trapping
         /// there can be an issue. Ideally we want the class to be initialised as early as possible.
+        /// 
+        /// Jan 2026: Discovered a case where Logger.Dispose() is being called and the queue destroyed before other classes have
+        /// been destroyed. It looks like the AppDomain.CurrentDomain.ProcessExit signal is being received too early so this
+        /// new feature aimed to ensure the file is closed nicely with a closing log message has its own problems.
+        /// - we must then try going back to a destructor or as recommended (and not recommended) IDisposable to close the file.
         /// </remarks>
+
         private static readonly Lazy<LogBase> instance = new Lazy<LogBase>(() => new LogBase());
+        private bool disposedValue;
 
         /// <summary>
         /// Accessor for the Singleton instance of the LogBase. Alternatively access the same singleton
@@ -222,7 +230,9 @@ namespace CsTool.Logger
         public static bool IsLogPriorityEnabled(LogPriority level) => Instance.IsLogPriorityEnabled(level);
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
-        public static bool LoadSettings() => Instance.LoadSettings();
+        public static bool LoadAppDefaults(object classInstance, string sectionName, string version = "1.0.0", string fileName = null,
+            bool createIfMissing = true, bool updateIfNeeded = true)
+            => Instance.LoadAppDefaults(classInstance, sectionName, version, fileName, createIfMissing, updateIfNeeded);
 
         /// <summary>
         /// Set the base directory for all logging. The default location is {StartupPath}\Logs.
@@ -235,11 +245,14 @@ namespace CsTool.Logger
         public static void Write(LogPriority level, string messageFormat, NameValueCollection parameters) => Instance.Write(level, messageFormat, parameters);
         public static void WriteRaw(string rawMessage, params object[] args) => Instance.WriteRaw(LogPriority.Info, rawMessage, args);
         public static void WriteRaw(LogPriority level, string rawMessage, params object[] args) => Instance.WriteRaw(level, rawMessage, args);
+        public static void WriteHex(LogPriority level, byte[] byteArray, string rawMessage, params object[] args) => Instance.WriteHex(level, byteArray, rawMessage, args);
+        public static void WriteHex(LogPriority level, byte[] byteArray, int maxBytes, string rawMessage, params object[] args) => Instance.WriteHex(level, byteArray, maxBytes, rawMessage, args);
         public static void Write(Exception exception) => Instance.Write(exception);
         public static void Write(Exception exception, string messageFormat) => Instance.Write(LogPriority.Fatal, exception, messageFormat);
         public static void Write(Exception exception, string messageFormat, params object[] propertyValues) => Instance.Write(LogPriority.Fatal, exception, messageFormat, propertyValues);
         public static void Write(LogPriority level, Exception exception, string messageFormat) => Instance.Write(level, exception, messageFormat);
         public static void Write(LogPriority level, Exception exception, string messageFormat, params object[] propertyValues) => Instance.Write(level, exception, messageFormat, propertyValues);
+
         /// <summary>
         /// Log the message and include the source file reference, method and line number.
         /// </summary>
@@ -330,19 +343,60 @@ namespace CsTool.Logger
 
         public static void LogMessageWithStats(LogPriority level, string message, bool countAsError = false, bool ignoreExceptions = false) => Instance.LogMessageWithStats(level, message, countAsError, ignoreExceptions);
 
+        //
+        // CsTool.Logger debugging. When logging is required prior to the Logger being fully initialised use SafeWrite
+        // to ensure a message is logged.
+        //
+        internal static void SafeWrite(Exception exception, string messageFormat, params object[] propertyValues) => LogBase.SafeWrite(LogPriority.ErrorCritical, exception, messageFormat, propertyValues);
+        public static void SafeWrite(LogPriority level, Exception exception, string messageFormat) => LogBase.SafeWrite(level, exception, messageFormat);
+        public static void SafeWrite(LogPriority level, Exception exception, string messageFormat, params object[] propertyValues) => LogBase.SafeWrite(level, exception, messageFormat, propertyValues);
+
+        public static void SafeWrite(LogPriority level, string messageFormat, params object[] propertyValues) => LogBase.SafeWrite(level, messageFormat, propertyValues);
+
+        internal static void SafeWrite(string messageFormat, params object[] propertyValues) => LogBase.SafeWrite(LogPriority.Info, messageFormat, propertyValues);
+
+        internal static void SafeWriteDebug(LogPriority level, string messageFormat, params object[] propertyValues) => LogBase.SafeWriteDebug(level, messageFormat, propertyValues);
+
+        private void Dispose(bool disposing)
+        {
+            CsTool.Logger.Log.Write(LogPriority.Always, "!Logger.Dispose({0})...",disposing);
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Logger.Write(LogPriority.Debug, "!Logger Dispose(): Disposing...");
+                    // TODO: dispose managed state (managed objects)
+                    Instance.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        ~Logger()
+        {
+            CsTool.Logger.Log.Write(LogPriority.Always, "!Logger Destructor: Disposing...");
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: false);
+            CsTool.Logger.Log.Write(LogPriority.Debug, "!Logger Destructor: Disposed");
+        }
+
+        void IDisposable.Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
         #endregion Methods
 
         //
         // -----------------------------------------------------------------------------------------
         //
         #region Configuration File Interface Methods
-
-        /// <summary>
-        /// Add the configuration properties to your application defaults file.
-        /// Create an XElement <Namespace></Namespace> with the settings defined in classInstance.
-        /// </summary>
-        /// <returns>The created XElement</returns>
-        public static XElement AddLoggingElements(object classInstance, string version = "1.0.0") => Instance.AddLoggingElements(classInstance, version);
 
         #endregion Configuration File Interface Methods
     }

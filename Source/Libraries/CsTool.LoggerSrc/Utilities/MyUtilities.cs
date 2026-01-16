@@ -31,14 +31,21 @@
         /// <summary>
         /// Environment variables that can be substituted in file paths in priority order
         /// </summary>
-        public static string[] SupportedEnvironmentVariables = new string[] { "%TEMP%", "%TMP%", "%LOCALAPPDATA%", "%USERPROFILE%",
-                                                                            "%APPDATA%", "%PUBLIC%",
-                                                                            "%OneDriveCommercial%", "%OneDriveConsumer%","%OneDrive%",
-                                                                            DropboxEnvVar,
-                                                                            "%ProgramData%", "%ALLUSERSPROFILE%", 
-                                                                            "%ProgramFiles(x86)%", "%ProgramFiles%",
-                                                                            CurrentDirectoryEnvVar, "%USERNAME%", "%COMPUTERNAME%",
-                                                                            AppNameEnvVar, ExecutablePathEnvVar};
+        public static string[] SupportedEnvironmentVariables = 
+                new string[] {
+                    "%TEMP%", "%TMP%", 
+                    "%PUBLIC%",
+                    ExecutablePathEnvVar,
+                    CurrentDirectoryEnvVar,
+                    "%ProgramData%", "%ALLUSERSPROFILE%", 
+                    "%ProgramFiles(x86)%", "%ProgramFiles%",
+                    "%OneDriveCommercial%", "%OneDriveConsumer%", "%OneDrive%", DropboxEnvVar,
+                    "%APPDATA%", "%LOCALAPPDATA%",
+                    "%USERPROFILE%",
+                    AppNameEnvVar,
+                    "%USERNAME%",
+                    "%COMPUTERNAME%",
+                };
 
         /// <summary>
         /// Replace all environment variables including the internal variable substitutions
@@ -51,10 +58,11 @@
         {
             string expandedPath = Environment.ExpandEnvironmentVariables(compactedPath);
             expandedPath = expandedPath
-                            .Replace(CurrentDirectoryEnvVar, Environment.CurrentDirectory)
-                            .Replace(AppNameEnvVar, LogUtilities.MyProcessName)
                             .Replace(ExecutablePathEnvVar,LogBase.AppDefaultsSystemFilePath)
-                            .Replace(DropboxEnvVar, DropboxPath);
+                            .Replace(CurrentDirectoryEnvVar, Environment.CurrentDirectory)
+                            .Replace(DropboxEnvVar, DropboxPath)
+                            .Replace(AppNameEnvVar, LogUtilities.MyProcessName)
+                            ;
 
             //Logger.Write("ExpandEnvironmentVariables:\n   {0}\n-> {1}", compactedPath, expandedPath);
             return expandedPath;
@@ -78,19 +86,20 @@
 
             foreach (string variable in SupportedEnvironmentVariables)
             {
+                // Custom variables
                 if (variable == CurrentDirectoryEnvVar)
                 {
-                    compactedPath = compactedPath.Replace(Environment.CurrentDirectory, CurrentDirectoryEnvVar);
+                    compactedPath = compactedPath.ReplaceIgnoreCase(Environment.CurrentDirectory, CurrentDirectoryEnvVar);
                     continue;
                 }
                 if (variable == AppNameEnvVar)
                 {
-                    compactedPath = compactedPath.Replace(LogUtilities.MyProcessName, variable);
+                    compactedPath = compactedPath.ReplaceIgnoreCase(LogUtilities.MyProcessName, variable);
                     continue;
                 }
                 if (variable == DropboxEnvVar)
                 {
-                    compactedPath = compactedPath.Replace(DropboxPath, variable);
+                    compactedPath = compactedPath.ReplaceIgnoreCase(DropboxPath, variable);
                     continue;
                 }
                 // Replace the destination path as it applies to an environment variable with the individual variable

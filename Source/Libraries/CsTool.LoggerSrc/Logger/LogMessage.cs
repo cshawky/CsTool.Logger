@@ -10,8 +10,9 @@ namespace CsTool.Logger
 {
     using System;
     using System.Collections.Specialized;
-    using System.Linq;
     using System.Diagnostics;
+    using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -42,7 +43,7 @@ namespace CsTool.Logger
         public void LogCommand(LogCommandAction logCommand, params object[] commandArgs)
         {
             QueuedMessage p = new QueuedMessage(logCommand, commandArgs);
-            bc.TryAdd(p, AddMessageTimeout);
+            TryAdd(p);
         }
 
         /// <summary>
@@ -88,6 +89,43 @@ namespace CsTool.Logger
             else
             {
                 p = new QueuedMessage(logPriority, date, messageFormat);
+            }
+            TryAdd(p);
+        }
+
+        /// <summary>
+        /// Core Hex LogMessage method. This method logs the formatted message followed by a hex dump of the byte array.
+        /// </summary>
+        /// <param name="logPriority">Priority of the log entry</param>
+        /// <param name="byteArray">Byte array to log</param>
+        /// <param name="messageFormat">Message string with formatting</param>
+        /// <param name="args">Format params argument array</param>
+        public virtual void WriteHex(LogPriority logPriority, byte[] byteArray, string messageFormat, params object[] args)
+        {
+            WriteHex(logPriority, byteArray, byteArray.Length, messageFormat, args);
+        }
+
+        /// <summary>
+        /// Core LogMessage method. This method logs the formatted message followed by a hex dump of the byte array.
+        /// </summary>
+        /// <param name="logPriority">Priority of the log entry</param>
+        /// <param name="byteArray">Byte array to log</param>
+        /// <param name="messageFormat">Message string with formatting</param>
+        /// <param name="args">Format params argument array</param>
+        public virtual void WriteHex(LogPriority logPriority, byte[] byteArray, int maxBytes, string messageFormat, params object[] args)
+        {
+            if ((Int32)logPriority > (Int32)LogThresholdMaxLevel) return;
+            if (IsLoseMessageOnBufferFull && bc.Count() >= bc.BoundedCapacity) return;
+
+            DateTimeOffset date = DateTimeOffset.Now;
+            QueuedMessage p;
+            if (args.Length > 0)
+            {
+                p = new QueuedMessage(logPriority, date, messageFormat, byteArray, maxBytes, args);
+            }
+            else
+            {
+                p = new QueuedMessage(logPriority, date, messageFormat, byteArray, maxBytes );
             }
             TryAdd(p);
         }
@@ -329,18 +367,25 @@ namespace CsTool.Logger
             TryAdd(p);
         }
 
+        //
+        // -----------------------------------------------------------------------------------------
+        //
+        // TODO Optimisation using lamda expressions.
+        //
+
 #if DEBUG_QUEUE
         public bool IsQueueAsyncEnabled { get; set; }
 
         private Stopwatch stopwatch = new Stopwatch();
 
         /// <summary>
-        /// TODO: This methods provides for additional diagnostics whilst testing and stressing the
+        /// TODO: This method provides for additional diagnostics whilst testing and stressing the
         /// queue and logging. Testing determined a delay occurs when the queue is full.
         /// Delay ~ 40 milliseconds, when Count = 100000, being the queue limit.
-        /// Even with this code the performance for insert is faster than Serilog for a 200000 messages pumped through.
+        /// Even with this code the performance for insert appears faster than Serilog for 200000 messages pumped through.
         /// </summary>
         /// <param name="p">The message to queue</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void TryAdd(QueuedMessage p)
         {
             stopwatch.Restart();
@@ -379,11 +424,34 @@ namespace CsTool.Logger
             if (t > AddMessageMaxTime ) AddMessageMaxTime = t;
         }
 #else
+        /// <summary>
+        /// Attempts to add the specified message to the internal queue for processing. If the queue is full or the
+        /// operation times out, the message is not enqueued and is counted as lost.
+        /// </summary>
+        /// <remarks>If the queue is full or the operation exceeds the configured timeout, the message
+        /// will not be enqueued and the total count of lost messages will be incremented. This method is intended for
+        /// internal use to manage message queuing and loss tracking.
+        /// 
+        /// TODO Optimisation. Measure the performance improvement when changing this.
+        /// 
+        /// Consider the code provided with CountLostMessagesTotal
+        /// (2.	Slightly more invasive — use atomic operations (Interlocked) for the lost counter so no lock is needed. This requires changing the backing counter to a signed long)
+        /// or the code below where the lock is inlined manually avoiding the property call overhead.
+        /// This is Minimal change — hint the JIT to inline and increment the backing field under the existing lock (avoids the property call overhead).
+        /// </remarks>
+        /// <param name="p">The message to add to the queue. Cannot be null.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void TryAdd(QueuedMessage p)
         {
-            if (!bc.TryAdd(p, AddMessageTimeout))
+            if (bc != null && bc.TryAdd(p, AddMessageTimeout))
             {
-                CountLostMessagesTotal++;
+                return;
+            }
+            //CountLostMessagesTotal++;
+            // Replace CountLostMessagesTotal++ with this code for slightly better performance.
+            lock (padLockCountLostMessagesTotal)
+            {
+                countLostMessagesTotal++;
             }
         }
 #endif

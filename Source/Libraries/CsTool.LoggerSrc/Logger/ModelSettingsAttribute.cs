@@ -78,7 +78,7 @@
 
     /// <summary>
     /// TESTING: Trying the use of attributes to identify the order of columns in a data table.
-    /// Apply this attribute to any public property in a class to provide an display order for the property.
+    /// Apply this attribute to any public property in a class to provide a display order for the property.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class ViewPropertyColumnAttribute : Attribute

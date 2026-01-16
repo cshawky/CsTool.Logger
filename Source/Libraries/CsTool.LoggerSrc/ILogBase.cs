@@ -29,7 +29,7 @@ namespace CsTool.Logger
     ///     logger1.Write("Hello World");
     ///     logger2.Write("Hello World");
     /// </remarks>
-    public interface ILogBase //: IDisposable
+    public interface ILogBase // Do not use IDisposable
     {
         //
         // CsTool.Logger Interfaces. 

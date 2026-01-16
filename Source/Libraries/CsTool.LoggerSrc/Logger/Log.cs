@@ -10,6 +10,7 @@ namespace CsTool.Logger
     using System;
     using System.Diagnostics;
     using System.IO;
+    using System.Text;
     using ExtensionMethods;
 
     /// <summary>
@@ -22,8 +23,9 @@ namespace CsTool.Logger
     /// </remarks>
     public static class Log
     {
+        public static bool LogFileExists = false;
 
-        private static string FullFilePath { get; set; } = Environment.GetEnvironmentVariable("TEMP") + @"\Logs\CsTool.Logger"; 
+        public static string FullFilePath { get; set; } = Environment.GetEnvironmentVariable("TEMP") + @"\Logs\CsTool.Logger"; 
 
         private static string FileName { get; set; } = @"CsTool.Logger." + Process.GetCurrentProcess().ProcessName
             .Replace(".vshost", "").Replace("XDesProc", "MyApplication").Replace(".exe", "") + ".log";
@@ -71,7 +73,7 @@ namespace CsTool.Logger
                     }
                     catch { }
                     string text = String.Format(
-                        "\n============================== CsTool.Logger Internal Logger : {0:yyyy-MMM-dd ddd HH:mm:ss}  =====================\n\n",
+                        "============================== CsTool.Logger Internal Logger : {0:yyyy-MMM-dd ddd HH:mm:ss.fff}  =====================\n\n",
                         DateTimeOffset.Now);
                     File.AppendAllText(FullFileName, text);
                     isFirstRun = false;
@@ -83,8 +85,13 @@ namespace CsTool.Logger
                 }
                 string message = string.Format("{0:HH:mm:ss.fff}: {1}: {2}\n", date, logPriority.ToString(), messageFormat);
                 File.AppendAllText(fullFileName, message);
+                LogFileExists = true;
             }
             catch { }
+            finally
+            {
+
+            }
         }
 
         /// <summary>
@@ -112,7 +119,7 @@ namespace CsTool.Logger
         /// <param name="exception">The exception</param>
         /// <param name="messageFormat">Unformatted string or formatted string with object arguments</param>
         /// <param name="args">Arguments for the formatted message</param>
-        public static void Write(Exception exception, string messageFormat, params object[] args)
+        public static void Write(LogPriority logPriority, Exception exception, string messageFormat, params object[] args)
         {
             string errorMessage = string.Concat(
                             messageFormat,
@@ -120,7 +127,7 @@ namespace CsTool.Logger
                             "\n  Line: ", exception.Source,
                             "\n  StackTrace: ", exception.StackTrace);
 
-            WriteIt(LogPriority.ErrorCritical, errorMessage, args);
+            WriteIt(logPriority, errorMessage, args);
         }
 
         /// <summary>
@@ -140,6 +147,79 @@ namespace CsTool.Logger
             messageFormat = string.Format("{0}{1}{2}.{3}() Line {4}: {5}", messageFormat, LogBase.LogNewLine, className, memberName, lineNumber, fileName);
 #endif
             WriteIt(logPriority, messageFormat, args);
+        }
+
+        /// <summary>
+        /// Log of last resort: Log a message including the line number, member name, source filename.
+        /// </summary>
+        /// <param name="exception">The exception caught</param>
+        /// <param name="messageFormat">String formatted message</param>
+        /// <param name="args">formatted message arguments</param>
+        public static void WriteDebug(LogPriority logPriority, Exception exception, string messageFormat, params object[] args)
+        {
+#if DEBUG
+            StackFrame frame = new StackFrame(2, true);
+            string className = frame.GetMethod().DeclaringType.Name;
+            string memberName = frame.GetMethod().Name;
+            int lineNumber = frame.GetFileLineNumber();
+            string fileName = frame.GetFileName();
+            messageFormat = string.Format("{0}{1}{2}.{3}() Line {4}: {5}", messageFormat, LogBase.LogNewLine, className, memberName, lineNumber, fileName);
+#endif
+            Write(logPriority, exception, messageFormat, args);
+        }
+
+        /// <summary>
+        /// Delete the existing log file
+        /// </summary>
+        public static void DeleteLogFile()
+        {
+            File.Delete(FullFileName);
+            isFirstRun = true;
+            LogFileExists = false;
+        }
+
+        /// <summary>
+        /// Return the current log file as a string. Usually for the purpose if importing into
+        /// the main log file and this log is then deleted.
+        /// </summary>
+        /// <returns>The log file as a string</returns>
+        public new static string ToString()
+        {
+            // return the log file as a string
+            try
+            {
+                if (File.Exists(FullFileName))
+                {
+                    return File.ReadAllText(FullFileName, Encoding.UTF8);
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            catch (Exception exception)
+            {
+                return $"Failed to read log file: {exception.Message}";
+            }
+        }
+
+        public static string ExtractLogContents()
+        {
+            string content = String.Empty;
+            if (LogFileExists)
+            {
+                try
+                {
+                    content = ToString();
+                    DeleteLogFile();
+                    LogFileExists = false;
+                }
+                catch (Exception exception)
+                {
+                    Write(LogPriority.ErrorCritical, exception, $"ExtractLogContents: Failed to extract and delete the log of last resort: {FullFileName}");
+                }
+            }
+            return content;
         }
     }
 }

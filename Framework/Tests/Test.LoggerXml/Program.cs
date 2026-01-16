@@ -30,12 +30,16 @@ namespace Test.LoggerXml
                 + " Version(" + Assembly.GetEntryAssembly().GetName().Version.ToString()
                 + ", CsTool.Logger " + Assembly.GetAssembly(typeof(Logger)).GetName().Version.ToString() + ")";
 
-            Logger.Write("Version Info: {0}, Computer({1}), User({2}), Domain({3})",
+            string message = String.Format("Version Info: {0}, Computer({1}), User({2}), Domain({3})",
             versionInfo, hostName, Environment.UserName, domainName);
-
+            Logger.Write(message);
+            Console.WriteLine(message);
             Logger.Write("{0}", Settings.Help);
             Console.WriteLine("{0}", Settings.Help);
             Thread.Sleep(1000);
+            string settingsFile = Settings.ToString();
+            Logger.WriteRaw("{0}", settingsFile);
+            Console.WriteLine("\n{0}\n", settingsFile);
             Console.WriteLine("Bye!");
             Thread.Sleep(1000);
         }

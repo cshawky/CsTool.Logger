@@ -15,12 +15,30 @@
 namespace CsTool.Logger.ExtensionMethods
 {
     using System;
+    using System.Text.RegularExpressions;
 
     /// <summary>
     /// Helpful string extensions, kept due to historical reasons. There may nbow be a more efficient way to do this...
     /// </summary>
     public static class MyStringExtensions
     {
+        /// <summary>
+        /// Framework does not support Replace(String, String, StringComparison) as with .NET 10
+        /// </summary>
+        /// <param name="str">the string to search</param>
+        /// <param name="search">The search string</param>
+        /// <param name="replacement">The replacement string</param>
+        /// <returns>The modified string</returns>
+        public static string ReplaceIgnoreCase(this string str, string search, string replacement)
+        {
+            return Regex.Replace(str, Regex.Escape(search), replacement, RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>
+        /// Old library. Now supported in Framework
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
         public static bool IsNullOrEmpty_Deprecated(this string str)
         {
             return string.IsNullOrEmpty(str);

@@ -78,30 +78,19 @@
         /// file refer to AppDefaultsLocalFullFilePath.
         public static String AppDefaultsSystemFilePath => appDefaultsSystemFilePath;
 
+        /// <summary>
+        /// Application defaults for CsTool.Logger stored in the application executable folder.
+        /// </summary>
+        public AppDefaultsDocument AppDefaultsDocument;
+
+        /// <summary>
+        /// Application defaults for CsTool.Logger stored in the application startup folder.
+        /// These settings override those in the application executable folder.
+        /// </summary>
+        public AppDefaultsDocument UserDefaultsDocument;
+
         #endregion App Defaults
 
-        /// <summary>
-        /// Add the logging configuration properties to your application defaults file.
-        /// i.e. Create an XElement <CsTool.Logger></CsTool.Logger> with the default logging settings.
-        /// </summary>
-        /// <returns>The created XElement</returns>
-        public XElement AddLoggingElements(object classInstance, string version = "1.0.0")
-        {
-            if (classInstance == null) classInstance = this;
-            XElement xList = XmlSettingsParsing.AddClass(null, classInstance, version);
-            if (xList != null && xList.Descendants().Count() > 0) return xList;
-            return null;
-        }
-
-        /// <summary>
-        /// Allow reload of the Logger settings from the application defaults file.
-        /// </summary>
-        /// <returns>True</returns>
-        public bool LoadSettings()
-        {
-            // Load the settings from the application defaults file
-            return LoadAppDefaults(this, "1.0.0", AppDefaultsFileName, true, true);
-        }
 
         /// <summary>
         /// Load settings for a class instance from your application defaults file. The application folder is checked first
@@ -118,28 +107,60 @@
         /// or properties failed to load correctly</param>
         /// <returns>True if the file was loaded successfully. False if the file requires upgrading</returns>
         /// Previously called LoadAppDefaults()
-        public bool LoadAppDefaults(object classInstance, string version = "1.0.0", string fileName = null,
+        public bool LoadAppDefaults(object classInstance, string sectionName, string version = "1.0.0", string fileName = null,
             bool createIfMissing = true, bool updateIfNeeded = true)
         {
-            if (classInstance == null) classInstance = this;
+            if (classInstance == null)
+            {
+                // TODO this should never be null, not even during logger initialisation
+                Logger.SafeWriteDebug(LogPriority.ErrorCritical, "LoadAppDefaults: No class instance provided, this should never be null!");
+                classInstance = this;
+            }
 
             if (fileName == null)
                 fileName = AppDefaultsFileName;
             //
-            // Load settings from the application folder
+            // Load settings from the application folder. Normally read only.
             //
-            string sourceFile = AppDefaultsSystemFilePath + "\\" + fileName;
-            bool result = LoadSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
+            string sourceFile1 = AppDefaultsSystemFilePath + "\\" + fileName;
+
+            AppDefaultsDocument = new AppDefaultsDocument(classInstance, sectionName, version, sourceFile1, createIfMissing);
+
+            bool result = AppDefaultsDocument.IsLoaded;
 
             //
-            // Load settings from the startup folder
+            // Load settings from the startup folder, normally tailorable by the end user.
             //
-            // set sourcePath to the current directory
-            sourceFile = LogUtilities.MyStartupPath + "\\" + fileName;
-            result = LoadSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
+            // set sourcePath to the current working directory (startup folder)
+            string sourceFile2 = LogUtilities.MyStartupPath + "\\" + fileName;
+
+            if (sourceFile2.Equals(sourceFile1, StringComparison.OrdinalIgnoreCase))
+            {
+                // Same file, no need to load twice
+                return result;
+            }
+            UserDefaultsDocument = new AppDefaultsDocument(classInstance, sectionName, version, sourceFile2, createIfMissing);
+            result = UserDefaultsDocument.IsLoaded;
             return result;
         }
 
+        public bool SaveAppDefaults(object classInstance, string sectionName = null, string version = "1.0.0")
+        {
+            bool isSaved = false;
+            if (AppDefaultsDocument != null && AppDefaultsDocument.IsLoaded && !AppDefaultsDocument.IsReadOnly )
+            {
+                isSaved = AppDefaultsDocument.SaveDocument(classInstance, sectionName, version);
+            }
+            if (UserDefaultsDocument != null && UserDefaultsDocument.IsLoaded)
+            {
+                isSaved &= UserDefaultsDocument.SaveDocument(classInstance, sectionName, version);
+            }
+            return isSaved;
+        }
+
+        //
+        // -----------------------------------------------------------------------------------------
+        //
         /// <summary>
         /// Load the settings for the class instance from the specified file. The file may contains settings from
         /// multiple modules (normally DLLs). The section read and updated is determined by the classInstance passed
@@ -155,7 +176,7 @@
         /// <param name="updateIfNeeded">If true, the file will be updated if the version is older than the current version
         /// or properties failed to load correctly</param>
         /// <returns>True if successful</returns>
-        public bool LoadSettingsFile(object classInstance, string sectionName, string version, string fullFileName,
+        public bool LoadSettingsFile_Retired(object classInstance, string sectionName, string version, string fullFileName,
             bool createIfMissing = true, bool updateIfNeeded = true)
         {
             if (fullFileName == null)
@@ -236,7 +257,7 @@
                 if (xMyClassSection == null)
                 {
                     Write(LogPriority.Warning, "LoadSettingsFile: Missing XElement<{0}>: {1}", classInstance.GetType().Name, fullFileName);
-                    xMyClassSection = AddLoggingElements(classInstance, version);
+                    xMyClassSection = AddLoggingElements_DontUse(classInstance, version);
                     xNamespace.Add(xMyClassSection);
                     isSaveNeeded = true;
                 }
@@ -270,14 +291,14 @@
             // load the required section
             try
             {
-                int errors = XmlSettingsParsing.LoadClassValues(xMyClassSection, classInstance, version);
+                int errors = XmlSettingsParsing.UpdateClassValues(xMyClassSection, classInstance, version);
                 if (errors != 0)
                 {
                     if (updateIfNeeded)
                     {
                         Write(LogPriority.Warning, "LoadSettingsFile: Element({0}.{1}) Load Errors({2}), overwriting section: {3}", nameSpaceName, classInstance.GetType().Name, errors, fullFileName);
                         xMyClassSection?.Remove();
-                        xNamespace.Add(AddLoggingElements(classInstance, version));
+                        xNamespace.Add(AddLoggingElements_DontUse(classInstance, version));
                         xDocument.Save(fullFileName);
                     }
                     else
@@ -304,41 +325,18 @@
         }
 
         /// <summary>
-        /// Save the application settings for the specified settings class instance to the application startup folder. The class specific
-        /// settings will be merged with the existing file.
+        /// Add the logging configuration properties to your application defaults file.
+        /// i.e. Create an XElement <CsTool.Logger></CsTool.Logger> with the default logging settings.
         /// </summary>
-        /// <param name="classInstance"></param>
-        /// <param name="version"></param>
-        /// <param name="fileName"></param>
-        /// <param name="createIfMissing"></param>
-        /// <param name="updateIfNeeded"></param>
-        /// <returns></returns>
-        public bool SaveAppDefaults(object classInstance, string version = "1.0.0", string fileName = null,
-            bool createIfMissing = true, bool updateIfNeeded = true)
+        /// <returns>The created XElement</returns>
+        public XElement AddLoggingElements_DontUse(object classInstance, string version = "1.0.0")
         {
             if (classInstance == null) classInstance = this;
-
-            if (fileName == null)
-                fileName = AppDefaultsFileName;
-            //
-            // Save settings to the application folder
-            //
-            string sourceFile = AppDefaultsSystemFilePath + "\\" + fileName;
-
-            bool result = false;
-            // TODO Not implemented
-            Logger.Write(LogPriority.Warning, "SaveAppDefaults: Not implemented");
-
-            //bool result = SaveSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
-
-            //
-            // Save settings from the startup folder
-            //
-            // Set sourcePath to the current directory
-            sourceFile = LogUtilities.MyStartupPath + "\\" + fileName;
-            //result = SaveSettingsFile(classInstance, null, version, sourceFile, createIfMissing, updateIfNeeded);
-
-            return result;
+            XElement xList = XmlSettingsParsing.AddClass(classInstance, null, version);
+            if (xList != null && xList.Descendants().Count() > 0) return xList;
+            return null;
         }
+
+
     }
 }

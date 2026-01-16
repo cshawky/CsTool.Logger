@@ -95,7 +95,7 @@
     /// 
     /// </remarks>
     [ModelSettingsClass]
-    public class SampleModelSettings // If using CoreUtilities should inherit DefaultSettings
+    public class SampleModelSettings
     {
 
         /// <summary>
@@ -125,19 +125,29 @@
         /// Use of this property name is optional.
         /// </summary>
         [ModelSettingsProperty]
-        public string Help { get; set; } = "\nThis is a sample Xml Settings file from CsTool.Logger.\nEnjoy!";
+        public string Help { get; set; } = "\nThis is a sample Xml Settings file from CsTool.Logger.\nEnjoy!\n";
 
         /// <summary>
         /// A standard string settings property.
         /// </summary>
         [ModelSettingsProperty]
-        public string StandardString { get; set; } = "Standard Value";
+        public string StandardString { get; set; } = "Hello World!";
 
         [ModelSettingsProperty]
         public int StandardInt { get; set; } = 42;
 
-        [ModelSettingsPropertyWithSubstitutions]
+        /// <summary>
+        /// An array of strings must be handled through a List()
+        /// </summary>
+        [ModelSettingsProperty]
         public List<string> StringList { get; set; } = new List<string> { "Value1", "Value2", @"C:\ProgramData\TestFolder" };
+
+        /// <summary>
+        /// An array of strings must be handled through a List()
+        /// TODO The List code is not working when [ModelSettingsPropertyWithSubstitutions] is used
+        /// </summary>
+        [ModelSettingsPropertyWithSubstitutions]
+        public List<string> StringListSubstituted { get; set; } = new List<string> { "Value1", "Value2", @"C:\ProgramData\TestFolder" };
 
         [ModelSettingsProperty]
         public DateTimeOffset DateNow { get; set; } = DateTimeOffset.Now;
@@ -176,6 +186,7 @@
 
         /// <summary>
         /// Include as a property. Arrays are supported.
+        /// TODO The List code is not working when [ModelSettingsPropertyWithSubstitutions] is used
         /// </summary>
         [ModelSettingsPropertyWithSubstitutions]
         public List<string> StringList2 { get; set; } = new List<string> { "Value21", "Value22", "C:\\ProgramData\\TestFolder2" };

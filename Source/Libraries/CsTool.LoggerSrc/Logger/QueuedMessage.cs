@@ -26,6 +26,9 @@ namespace CsTool.Logger
         internal Exception LogException { get; set; }           // Optional Exception 
         internal Int32 ThreadId { get; set; } = Thread.CurrentThread.ManagedThreadId;  // ManagedThreadId if the current thread
 
+        internal byte[] RawData { get; set; } = null;           // Optional raw data for the message, e.g. a byte array
+
+        internal int RawDataLength { get; set; } = 0;           // Length of the raw data, if any
         #endregion Properties
 
         //
@@ -96,6 +99,27 @@ namespace CsTool.Logger
             Args = logArgs;
             LogException = exception;
             IsException = true;
+        }
+
+        public QueuedMessage(LogPriority logPriority, DateTimeOffset logDate, string logMsg, byte[] byteArray, int maxBytes)
+        {
+            LPriority = logPriority;
+            LDate = logDate;
+            Msg = logMsg;
+            RawData = byteArray;
+            // set the value of p.RawDataLength to the minimum of maxBytes or byteArray.Length
+            RawDataLength = (byteArray.Length < maxBytes) ? byteArray.Length : maxBytes;
+        }
+
+        public QueuedMessage(LogPriority logPriority, DateTimeOffset logDate, string logMsg, byte[] byteArray, int maxBytes, object[] logArgs)
+        {
+            LPriority = logPriority;
+            LDate = logDate;
+            Msg = logMsg;
+            Args = logArgs;
+            RawData = byteArray;
+            // set the value of p.RawDataLength to the minimum of maxBytes or byteArray.Length
+            RawDataLength = (byteArray.Length < maxBytes) ? byteArray.Length : maxBytes;
         }
 
         public QueuedMessage(LogCommandAction logCommand)

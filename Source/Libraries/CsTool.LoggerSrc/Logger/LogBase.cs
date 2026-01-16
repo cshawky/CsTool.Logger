@@ -79,14 +79,17 @@ namespace CsTool.Logger
         #region Initialisation
 
         /// <summary>
-        /// Indicates that this Logger instance has been initialised
+        /// Indicates that this Logger instance has been initialised. 
         /// </summary>
         private bool IsInitialised { get; set; } = false;
 
         /// <summary>
         /// Indicates that the first Logger instance has been initialised. i.e. the singleton instance.
+        /// Prior to initialisation of the
+        /// primary logger use Log.Write to log low level messages. This is normally only required
+        /// by the LogBase class itself.
         /// </summary>
-        private static bool IsFirstInitialised { get; set; } = false;
+        internal static bool IsFirstInitialised { get; set; } = false;
 
         /// <summary>
         /// Inidcates that the ProcessExit event has been registered.
@@ -112,6 +115,9 @@ namespace CsTool.Logger
         {
             lock (padLockProperties)
             {
+#if DEBUGLOGGER2
+                Logger.SafeWrite(LogPriority.Verbose, "LogBase: Initialising Logger instance...");
+#endif // DEBUGLOGGER2
                 // Subscribe to the AppDomain.ProcessExit event. most important step to ensure all messages are saved on exit.
                 if (!IsProcessExitRegistered)
                 {
@@ -126,6 +132,9 @@ namespace CsTool.Logger
                     IsExceptionHandlerRegistered = true;
                 }
                 InitialiseLog();
+#if DEBUGLOGGER2
+                Logger.SafeWrite(LogPriority.Verbose, "LogBase: Initialised");
+#endif // DEBUGLOGGER2
             }
         }
 
@@ -141,13 +150,20 @@ namespace CsTool.Logger
         {
             lock (padLockProperties)
             {
+#if DEBUGLOGGER2
+                Logger.SafeWrite("LogBase: Initialising Logger an additional instance");
+#endif // DEBUGLOGGER2
                 InitialiseLog();
                 IsUserNameAppended = enableUserName;
                 if (newFilePrependText != null)
                     FilePrepend = newFilePrependText;
                 if (fileNameDateTime != null)
                     FileNameDateFormat = fileNameDateTime;
+#if DEBUGLOGGER2
+                Logger.SafeWrite(LogPriority.Verbose, "LogBase: Additional Logger Initialised");
+#endif // DEBUGLOGGER2
             }
+
         }
 
         /// <summary>
@@ -157,9 +173,12 @@ namespace CsTool.Logger
         {
             if (IsInitialised)
             {
-                Log.WriteDebug(LogPriority.Debug, "InitialiseLog: Logger already initialised");
+                Logger.SafeWrite(LogPriority.Debug, "LogBase: InitialiseLog: Logger already initialised");
                 return;
             }
+#if DEBUGLOGGER2
+            Logger.SafeWrite(LogPriority.Verbose, "LogBase: InitialiseLog() Started...");
+#endif // DEBUGLOGGER2
 
             //
             // Create the message FIFO queue.
@@ -167,13 +186,14 @@ namespace CsTool.Logger
             bc = new BlockingCollection<QueuedMessage>(MaximumLogQueueSize);
 
             //
-            // Logger messages may now be queued.
+            // Logger messages may now be queued. Wait until folder structure setup is complete.
             //
 
             //
-            // Load logger settings which includes identifying the log file path.
+            // Load logger settings which includes identifying the log file path
+            // and deciding how much to log.
             //
-            LoadAppDefaults(this, "1.0.0");
+            LoadAppDefaults(this, null, "2.0.1");
 
             //
             // Now validate or set the log file path
@@ -186,30 +206,18 @@ namespace CsTool.Logger
             CheckLogFileIsWriteable();
 
             //
-            // Backup old log files, this will rename the existing file unless append is enabled.
-            // but the new log file is not opened until a message is ready to be consumed.
-            //
-            if (isLogFileFirstOpen && !isAppendFileEnabled)
-            {
-                BackupLogFiles();
-                CountLoggedMessages = 0;
-            }
+            // It should be safe to queue messages now, even though the write is not ready.
+            IsInitialised = true;
+            IsFirstInitialised = true;
 
             //
             // Monitor/process the logging queue
             //
             ConsumeMessages();
 
-            //
-            // Setup a timed file flush action. This should not really be needed.
-            //
-            timer = new System.Timers.Timer(2000);
-            timer.Elapsed += OnTimedEvent;
-            timer.AutoReset = true;
-            timer.Enabled = true;
-
-            IsInitialised = true;
-            IsFirstInitialised = true;
+#if DEBUGLOGGER2
+                Logger.SafeWrite(LogPriority.Verbose, "LogBase: InitialiseLog() Done");
+#endif // DEBUGLOGGER2
         }
 
         /// <summary>
@@ -219,6 +227,10 @@ namespace CsTool.Logger
         /// <param name="e">not used</param>
         private void OnProcessExit(object sender, EventArgs e)
         {
+#if DEBUGLOGGER2
+            Logger.Write(LogPriority.Debug, "Logger has received AppDomain.CurrentDomain.ProcessExit signal");
+            Logger.Write(LogPriority.Debug, "Disabled Dispose() from ProcessExit. Rely on Destructor...");
+#endif // DEBUGLOGGER2
             Dispose(true);
         }
 
@@ -231,10 +243,7 @@ namespace CsTool.Logger
         public static void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Exception exception = e.ExceptionObject as Exception;
-            if (IsFirstInitialised)
-                Logger.Write(exception, "LogUnhandledException");
-            else
-                Log.Write(exception, "LogUnhandledException");
+            Logger.SafeWrite(LogPriority.Fatal, exception, "LogUnhandledException");
         }
 
         /// <summary>
@@ -245,10 +254,7 @@ namespace CsTool.Logger
         public static void LogUIThreadException(object sender, ThreadExceptionEventArgs t)
         {
             Exception exception = t.Exception;
-            if (IsFirstInitialised)
-                Logger.Write(exception, "LogUIThreadException");
-            else
-                Log.Write(exception, "LogUIThreadException");
+            Logger.SafeWrite(LogPriority.Fatal, exception, "LogUIThreadException");
         }
 
         public void Dispose()
@@ -271,6 +277,9 @@ namespace CsTool.Logger
                 if ( bc != null ) while (bc.Count > 0) Thread.Sleep(100);
                 return;
             }
+#if DEBUGLOGGER2
+            Log.Write(LogPriority.Verbose, "LogBase.Dispose() Goodbye MessageQueue");
+#endif // DEBUGLOGGER2
             lock (padLockProperties)
             {
                 isShutDownActive = true;
@@ -340,7 +349,9 @@ namespace CsTool.Logger
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
             UInt64 thisCount = CountLoggedMessagesTotal;
-            //Logger.Write($"OnTimedEvent({e.SignalTime:HH:mm:ss.fff}) {CountLoggedMessages}");
+#if DEBUGLOGGER2
+            Logger.SafeWrite($"OnTimedEvent({e.SignalTime:HH:mm:ss.fff}) {CountLoggedMessages}");
+#endif // DEBUGLOGGER2
             if (TimerLastCount != thisCount)
             {
                 TimerLastCount = thisCount;
@@ -351,7 +362,7 @@ namespace CsTool.Logger
                 }
             }
         }
-        #endregion Initialisation
+#endregion Initialisation
 
         //
         // -----------------------------------------------------------------------------------------
@@ -369,6 +380,35 @@ namespace CsTool.Logger
             {
                 try
                 {
+#if DEBUGLOGGER2
+                    Logger.SafeWriteDebug(LogPriority.Debug, "ConsumeMessages: Backup old log files...");
+#endif // DEBUGLOGGER2
+                    //
+                    // Backup old log files, this will rename the existing file unless append is enabled.
+                    // but the new log file is not opened until a message is ready to be consumed.
+                    //
+                    if (isLogFileFirstOpen && !isAppendFileEnabled)
+                    {
+                        BackupLogFiles();
+                        CountLoggedMessages = 0;
+                    }
+
+#if DEBUGLOGGER2
+                    Logger.SafeWriteDebug(LogPriority.Debug, "ConsumeMessages: Initialise flush timer...");
+#endif // DEBUGLOGGER2
+                    //
+                    // Setup a timed file flush action. This should not really be needed.
+                    //
+                    timer = new System.Timers.Timer(2000);
+                    timer.Elapsed += OnTimedEvent;
+                    timer.AutoReset = true;
+                    timer.Enabled = true;
+
+#if DEBUGLOGGER2
+                    Logger.SafeWriteDebug(LogPriority.Debug, "ConsumeMessages: Logger consumer task started");
+#endif // DEBUGLOGGER2
+
+                    // Process messages until the queue is marked as complete.
                     foreach (QueuedMessage p in bc.GetConsumingEnumerable())
                     {
                         LogQueuedMessage(p);
@@ -380,7 +420,7 @@ namespace CsTool.Logger
             }, CancellationToken.None, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
         }
 
-        #endregion Consumer
+#endregion Consumer
 
         //
         // -----------------------------------------------------------------------------------------
@@ -589,16 +629,19 @@ namespace CsTool.Logger
                     if ((!String.IsNullOrWhiteSpace(newFileReason) || isLogFileFirstOpen) && !isShutDownActive)
                     {
                         DateTimeOffset date = DateTimeOffset.Now;
+
+                        string startupLogContents = Log.ExtractLogContents();
+                        string reasonText = String.Empty;
+                        if ( newFileReason?.Length > 0) reasonText = " : " + newFileReason;
                         streamWriter.Write(
-                            "\n============================== Logging started : {0:yyyy-MMM-dd ddd HH:mm:ss.fff} : {1} =====================\n\n",
-                            date, newFileReason);
+                            $"{startupLogContents}\n============================== {FilePrepend} Logging started : {date:yyyy-MMM-dd ddd HH:mm:ss.fff}{reasonText} =====================\n\n");
                         streamWriter.Flush();
                     }
                     isLogFileFirstOpen = false;
                 }
                 catch (Exception exception)
                 {
-                    Log.Write(exception, "CreateNewLogFile: Failed to create new log file, attempting to generate a new filename...");
+                    Log.Write(LogPriority.ErrorCritical, exception, "CreateNewLogFile: Failed to create new log file, attempting to generate a new filename...");
                     // Assume we now have a write conflict so generate a new file name:
                     CheckLogFileIsWriteable();
                 }
@@ -636,13 +679,13 @@ namespace CsTool.Logger
                 if (!Directory.Exists(preferredPath))
                 {
                     Directory.CreateDirectory(preferredPath);
-                    Log.WriteDebug(LogPriority.Debug, "Created path {0}", preferredPath);
+                    Logger.SafeWriteDebug(LogPriority.Debug, "SetLogDirectory: Created path {0}", preferredPath);
 
                 }
             }
             catch (Exception exception)
             {
-                Log.Write(exception, "SetLogDirectory: Fundamental path issue: " + preferredPath);
+                Log.WriteDebug(LogPriority.Fatal, exception, "SetLogDirectory: Fundamental path issue: " + preferredPath);
             }
             finally
             {

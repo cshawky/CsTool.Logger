@@ -53,6 +53,7 @@ namespace CsTool.Logger
                         // In case user runtime message formatting is invalid, catch it here and continue
                         try
                         {
+                            // Format the message with the arguments
                             p.Msg = string.Format(p.Msg, p.Args);
                         }
                         catch (Exception exception)
@@ -60,6 +61,12 @@ namespace CsTool.Logger
                             string msg = String.Format("LogMessage formatting error in \nMsg[{0}], Argument Count = {1}", p.Msg, p.Args.Length);
                             p.Msg = ConstructExceptionMessage(exception, msg);
                         }
+                    }
+                    if (p.RawData != null && p.RawData.Length > 0)
+                    {
+                        // Append the raw data to the message
+                        char[] rawDataMessage = ByteArrayToHexDumpViaLookup32(p.RawData, p.RawDataLength, BytesPerLine);
+                        p.Msg += "\n" + new string(rawDataMessage);
                     }
                     try
                     {
@@ -117,7 +124,7 @@ namespace CsTool.Logger
                         // Should never get here but attempt to get a message logged, assuming some format parsing issue.
                         //
                         if (!p.IsException)
-                            Log.Write(exception, "LogQueuedMessage Write Error");
+                            Log.Write(LogPriority.Fatal, exception, "LogQueuedMessage Write Error");
                     }
                     break;
 
@@ -196,7 +203,7 @@ namespace CsTool.Logger
             }
             catch (Exception exception)
             {
-                Log.Write(exception,"Failed to Backup Log Files: {0}", fullFileName);
+                Log.Write(LogPriority.Fatal, exception, "Failed to Backup Log Files: {0}", fullFileName);
             }
         }
 

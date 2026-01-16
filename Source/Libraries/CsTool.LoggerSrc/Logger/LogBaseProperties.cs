@@ -7,12 +7,16 @@
 // -------------------------------------------------------------------------------------------------------------------------
 namespace CsTool.Logger
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.IO;
-    using System.Text;
     using ExtensionMethods;
     using Model;
+    using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Runtime.CompilerServices;
+    using System.Text;
+    using System.Threading;
 
     /// <summary>
     /// The Thread Safe Logger interface for your application.
@@ -72,7 +76,6 @@ namespace CsTool.Logger
         /// </summary>
         [ModelSettingsProperty]
         public uint CountLoggedMessagesMaximum { get; set; } = 100000;
-
 
         /// <summary>
         /// The default number of old log files to keep. Depending on the application a new file is created each time the programme
@@ -201,6 +204,9 @@ namespace CsTool.Logger
         /// </remarks>
         [ModelSettingsProperty]
         public DebugThresholdLevel LogThresholdMaxLevel { get; set; } = DebugThresholdLevel.LogInfo;
+
+        [ModelSettingsProperty]
+        public List<string> SubstitutionsSupported { get; set; } = LogUtilities.SupportedEnvironmentVariables.ToList<string>();
 
         #endregion ModelSettings Properties
 
@@ -457,6 +463,27 @@ namespace CsTool.Logger
         /// <summary>
         /// A count of the total number of messages that could not be queued.
         /// </summary>
+        /// <remarks>
+        /// TODO For better performance try:
+        /// 
+        /// Rather than use the setter, inline like:
+        /// <code>
+        ///     // change
+        ///     private long countLostMessagesTotalLong;
+        ///
+        ///     // expose as before (casts)
+        ///     public ulong CountLostMessagesTotal => (ulong)Interlocked.Read(ref countLostMessagesTotalLong);
+        ///
+        ///     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        ///     private void TryAdd(QueuedMessage p)
+        ///     {
+        ///         if (!bc.TryAdd(p, AddMessageTimeout))
+        ///         {
+        ///              Interlocked.Increment(ref countLostMessagesTotalLong);
+        ///         }
+        ///     }
+        /// </code>
+        /// </remarks>
         public ulong CountLostMessagesTotal 
         {
             get => countLostMessagesTotal;
@@ -468,6 +495,11 @@ namespace CsTool.Logger
                 }
             }
         }
+
+        /// <summary>
+        /// The number of bytes per line in the hex dump. Used with Logger.WriteHexDump()
+        /// </summary>
+        public int BytesPerLine { get; set; } = 64;
 
         #endregion Properties
 

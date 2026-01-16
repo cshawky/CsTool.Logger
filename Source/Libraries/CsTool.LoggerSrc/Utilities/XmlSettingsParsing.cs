@@ -59,7 +59,7 @@
             catch (Exception exception)
             {
                 // Only useful for program debugging during development
-                Log.Write(exception, "Error: CsTool.Logger: Failed to create application defaults from settings file.");
+                Logger.SafeWrite(exception, "Error: CsTool.Logger: Failed to create application defaults from settings file.");
                 return null;
             }
             return xDocument;
@@ -78,6 +78,8 @@
         /// <param name="xmlTree">An existing xml section.</param>
         /// <param name="propertyName">The base name of the propertyValue.</param>
         /// <param name="propertyValue">The enumeration value to write</param>
+        /// <param name="version">The version of this settings file section</param>
+        /// <param name="stringSubstitutions">If True, environment variables in strings are substituted</param>
         /// <returns>True if successful</returns>
         /// <remarks>
         /// Example results
@@ -85,14 +87,14 @@
         ///     <CountOldLogFilesToKeep>20</CountOldLogFilesToKeep>
         ///     <LogThresholdMaxLevel-Help usage="LogFatal LogImportantInfo LogCritical LogError LogWarning LogInfo LogDebug LogVerbose" />
         ///     <LogThresholdMaxLevel>LogInfo</LogThresholdMaxLevel>
-        ///     <StringList count = "3">
+        ///     <StringListT count = "3">
         ///         <StringList>Value1</StringList>
         ///         <StringList>Value2</StringList>
         ///         <StringList>Value3</StringList>
-        ///     </StringList>
+        ///     </StringListT>
         /// </code>
         /// </remarks>
-        public static bool AddProperty(ref XElement xmlTree, string propertyName, object propertyValue, string version)
+        public static bool AddProperty(ref XElement xmlTree, string propertyName, object propertyValue, string version, bool stringSubstitutions)
         {
             if (xmlTree == null)
                 return false;
@@ -105,7 +107,7 @@
 
             if (propertyName == "MyLogger" || propertyName == "SampleSettings")
             {
-                Logger.Write("Warning: CsTool.Logger.AddProperty: Property({0}) is not supported", propertyName);
+                Logger.SafeWrite("Warning: CsTool.Logger.AddProperty: Property({0}) is not supported", propertyName);
             }
             try
             {
@@ -122,7 +124,7 @@
                     if (modelSettingsAttribute1 != null || modelSettingsAttribute2 != null)
                     {
                         // Create child XElement containing all properties of this class instance
-                        XElement xList = AddClass(propertyName, propertyValue, version);
+                        XElement xList = AddClass(propertyValue, propertyName, version);
                         if (xList != null && xList.Descendants().Count() > 0)
                         {
                             xmlTree.Add(xList);
@@ -132,7 +134,7 @@
                     }
                 }
                 //
-                // Provide special handling for enumerations and string arrays
+                // Provide special handling for enumerations and string arrays as List<string>
                 //
                 if (type.IsEnum)
                 {
@@ -167,7 +169,7 @@
                         foreach (object element in propertyValueList)
                         {
                             // select value from propertyValueList
-                            AddProperty(ref xList, propertyName, element, version);
+                            AddProperty(ref xList, propertyName, element, version, stringSubstitutions);
                         }
                         xmlTree.Add(xList);
                         return true;
@@ -175,7 +177,7 @@
                     catch (Exception exception)
                     {
                         // Log the exception
-                        Log.Write(exception, "Exception at element[{0},{1}]", propertyName, i);
+                        Logger.SafeWrite(exception, "Exception at element[{0},{1}]", propertyName, i);
                     }
                     return false;
                 }
@@ -185,8 +187,15 @@
                 switch (typeName)
                 {
                     case "String":
-                       //string elementValue = MyUtilities.InsertEnvironmentVariables(propertyValue as string);
-                        string elementValue = propertyValue as string;
+                        string elementValue;
+                        if ( stringSubstitutions)
+                        {
+                            elementValue = MyUtilities.InsertEnvironmentVariables(propertyValue as string);
+                        }
+                        else
+                        {
+                            elementValue = propertyValue as string;
+                        }
                         xmlTree.Add(new XElement(propertyName, elementValue));
                         break;
                     default:
@@ -198,7 +207,7 @@
             }
             catch (Exception exception)
             {
-                Logger.Write(exception, "Exception at element[" + propertyName + "]");
+                Logger.SafeWrite(exception, "Exception at element[" + propertyName + "]");
             }
             return false;
         }
@@ -265,7 +274,7 @@
         /// <param name="classInstance">The Class Instance to extract properties from</param>
         /// <param name="version">The version of this settings file section</param>
         /// <returns>Returns an XElement containing all properties with the [ModelSettings*] attributes, null if no properties are exposed.</returns>
-        public static XElement AddClass(string xmlElementGroupName, object classInstance, string version)
+        public static XElement AddClass(object classInstance, string xmlElementGroupName, string version)
         {
             if (classInstance == null)
                 return null;
@@ -354,25 +363,18 @@
                     try
                     {
                         object value = property.GetValue(classInstance);
-                        if (property.GetCustomAttribute<ModelSettingsPropertyWithSubstitutionsAttribute>() != null)
-                        {
-                            value = MyUtilities.InsertEnvironmentVariables(value as string);
-                        }
-                        //if ( property.Name == "Name" && value.ToString().Length > 0)
-                        //{
-                        //    xmlSection.SetAttributeValue("name", value);
-                        //}
-                        AddProperty(ref xmlSection, property.Name, value, version);
+                        bool stringSubstitutions = property.GetCustomAttribute<ModelSettingsPropertyWithSubstitutionsAttribute>() != null;
+                        AddProperty(ref xmlSection, property.Name, value, version, stringSubstitutions);
                     }
                     catch (Exception exception)
                     {
-                        Log.Write(exception, "Error: CsTool.Logger.AddClass({0}): Property({1}) exception", xmlElementGroupName, property.Name);
+                        Logger.SafeWrite(exception, "Error: CsTool.Logger.AddClass({0}): Property({1}) exception", xmlElementGroupName, property.Name);
                     }
                 }
             }
             catch (Exception exception)
             {
-                Log.Write(exception, "Error: CsTool.Logger.AddClass: AddClass({0}) exception", xmlElementGroupName);
+                Logger.SafeWrite(exception, "Error: CsTool.Logger.AddClass: AddClass({0}) exception", xmlElementGroupName);
             }
             int count = xmlSection.Descendants().Count();
             if (count == 0)
@@ -387,17 +389,73 @@
         // -----------------------------------------------------------------------------------------
         //
         #region Xml File Read Interface
+
         /// <summary>
-        /// Update Properties of a Settings Class from an XElement. Used to read in saved values from the settings file.
+        /// Validates the XElement against the properties of the class instance. The number of property
+        /// errors in the XElement is returned.
         /// </summary>
         /// <param name="settingsSection">The XElement being comprising of this section</param>
         /// <param name="classInstance">The class instance that defines and receives the properties from the XElement</param>
+        /// <param name="version">The version of this settings file section</param>
         /// <returns>The number of errors detected whilst loading properties</returns>
-        public static int LoadClassValues(XElement settingsSection, object classInstance, string version)
+        public static int ValidateClassProperties(XElement settingsSection, object classInstance, string version)
+        {
+            // Parse the XElement but do not update the class instance. The number of errors is returned.
+            return LoadClassValues(settingsSection, classInstance, version, false, out int countChanges);
+        }
+
+        /// <summary>
+        /// Validates the XElement against the properties of the class instance. The number of property
+        /// errors in the XElement is returned.
+        /// </summary>
+        /// <param name="settingsSection">The XElement being comprising of this section</param>
+        /// <param name="classInstance">The class instance that defines and receives the properties from the XElement</param>
+        /// <param name="version">The version of this settings file section</param>
+        /// <returns>The number of properties whose value changed</returns>
+        public static int UpdateClassValues(XElement settingsSection, object classInstance, string version)
+        {
+            int countErrors = LoadClassValues(settingsSection, classInstance, version, true, out int countChanges);
+            if (countErrors > 0)
+            {
+                // Good programming should have fixed the file errors before transferring the data.
+                Logger.SafeWrite(LogPriority.ErrorProcessing, "UpdateClassValues: Class({0}) had {1} errors during update",
+                    classInstance.GetType().Name, countErrors);
+
+            }
+            if (countChanges > 0) 
+            {
+                Logger.SafeWrite(LogPriority.Debug, "UpdateClassValues: Class({0}) had {1} properties updated from the settings file",
+                    classInstance.GetType().Name, countChanges);
+            }
+            return countChanges;
+        }
+
+        /// <summary>
+        /// Update Properties of a Settings Class from an XElement. Used to read in saved values from the settings file.
+        /// TODO Implement versioning. i.e. upgrade if the version is older than the requested version. This allows for
+        /// the file to be upgraded, not downgraded when used by an old application. Apps resposibility for compatibility.
+        /// </summary>
+        /// <param name="settingsSection">The XElement being comprising of this section</param>
+        /// <param name="classInstance">The class instance that defines and receives the properties from the XElement</param>
+        /// <param name="version">The version of this settings file section</param>
+        /// <param name="updateValues">If True the XElement will be checked for each property expected but the classInstance
+        /// will not be updated. Use this to validate the structure of the XElement without modifying the instance.</param>
+        /// <param name="countChanges">Outputs the number of properties that were modified from the XElement</param>
+        /// <returns>The number of XElement errors detected whilst loading properties</returns>
+        private static int LoadClassValues(XElement settingsSection, object classInstance, string version, bool updateValues, out int countChanges)
         {
             int errors = 0;
-            if (settingsSection == null) return -1;
-            if (classInstance == null) return -1;
+            countChanges = -1;
+            if (settingsSection == null)
+            {
+                Logger.SafeWrite(LogPriority.ErrorProcessing, "CsTool.Logger.LoadClassValues: settingsSection is null");
+                return -1;
+            }
+            if (classInstance == null)
+            {
+                Logger.SafeWrite(LogPriority.ErrorProcessing, "CsTool.Logger.LoadClassValues: classInstance is null");
+                return -1;
+            }
 
             Type logBasePropertiesType = classInstance.GetType();
             string typeName = classInstance.GetType().Name;
@@ -427,7 +485,7 @@
 
                             if (propertyType.IsArray)
                             {
-                                Log.Write("Warning: CsTool.Logger.LoadClassValues: Property({0}) Type({1}) currently not supported",
+                                Logger.SafeWrite(LogPriority.Warning, "CsTool.Logger.LoadClassValues: Property({0}) Type({1}) currently not supported",
                                     property.Name, propertyTypeName);
                                 continue;
                             }
@@ -438,7 +496,7 @@
                             if (propertyTypeName.StartsWith("List"))
                             {
                                 newValue = GetPropertyAsType(settingsSection, property, classInstance, ref errors);
-                                property.SetValue(classInstance, newValue);
+                                if ( updateValues ) property.SetValue(classInstance, newValue);
                             }
 
                             //
@@ -459,12 +517,12 @@
                                     newValue = GetPropertyAsType(settingsSection, property, classInstance, ref errors);
                                     break;
                             }
-                            property.SetValue(classInstance, newValue);
+                            if (updateValues) property.SetValue(classInstance, newValue);
                         }
                         catch (Exception exception)
                         {
                             errors++;
-                            Log.Write(exception, "Error: CsTool.Logger.LoadClassValues({0}): Property({1}) exception", typeName, property.Name);
+                            Logger.SafeWrite(exception, "CsTool.Logger.LoadClassValues({0}): Property({1}) exception", typeName, property.Name);
                         }
                         continue;
                     }
@@ -479,21 +537,21 @@
                             XElement xmlSubSection = settingsSection.Element(propertyName);
                             if (xmlSubSection == null)
                             {
-                                Log.Write("Warning: CsTool.Logger.LoadClassValues: Class({0}) properties not found in settings file", property.Name);
+                                Logger.SafeWrite(LogPriority.Warning, "CsTool.Logger.LoadClassValues: Class({0}) properties not found in settings file", property.Name);
                                 errors++;
                                 continue;
                             }
-                            int subErrors = LoadClassValues(xmlSubSection, property.GetValue(classInstance), version);
+                            int subErrors = LoadClassValues(xmlSubSection, property.GetValue(classInstance), version, updateValues, out countChanges);
                             if (subErrors != 0)
                             {
                                 errors += Math.Abs(subErrors);
-                                Log.Write("Error: CsTool.Logger.LoadClassValues: Class({0}) properties not set", property.Name);
+                                Logger.SafeWrite(LogPriority.ErrorCritical, "CsTool.Logger.LoadClassValues: Class({0}) properties not set", property.Name);
                             }
                         }
                         catch (Exception exception)
                         {
                             errors++;
-                            Log.Write(exception, "Error: CsTool.Logger.LoadClassValues({0}): Property({1}) exception", typeName, property.Name);
+                            Logger.SafeWrite(exception, "CsTool.Logger.LoadClassValues({0}): Property({1}) exception", typeName, property.Name);
                         }
                         continue;
                     }
@@ -502,7 +560,7 @@
             catch (Exception exception)
             {
                 errors++;
-                Log.Write(exception, "Error: CsTool.Logger.LoadClassValues({0}) Errors({1})", typeName, errors);
+                Logger.SafeWrite(exception, "CsTool.Logger.LoadClassValues({0}) Errors({1})", typeName, errors);
             }
             return errors;
         }
@@ -515,7 +573,7 @@
         /// <param name="propertyInfo">PropertyInfo object for the desired propertyInfo</param>
         /// <param name="classInstance">The class instance that contains the desired propertyInfo.</param>
         /// <returns>New propertyInfo value if successfully, current propertyInfo value otherwise.</returns>
-        public static object GetPropertyAsType(XElement settingsSection, PropertyInfo propertyInfo, object classInstance, ref Int32 errors)
+        private static object GetPropertyAsType(XElement settingsSection, PropertyInfo propertyInfo, object classInstance, ref Int32 errors)
         {
             // Object Type
             Type type = propertyInfo.PropertyType;
@@ -529,7 +587,7 @@
                 if (element == null)
                 {
                     errors++;
-                    Log.Write(LogPriority.Verbose, "CsTool.Logger.GetPropertyAsType: Property({0}) not found in settings file", propertyName);
+                    Logger.SafeWrite(LogPriority.Verbose, "CsTool.Logger.GetPropertyAsType: Property({0}) not found in settings file", propertyName);
                     return result;
                 }
 
@@ -552,13 +610,13 @@
                 }
                 else
                 {
-                    Log.Write("Error: CsTool.Logger: Unexpected type conversion failure: Property({0})", propertyInfo.Name);
+                    Logger.SafeWrite("Error: CsTool.Logger: Unexpected type conversion failure: Property({0})", propertyInfo.Name);
                     errors++;
                 }
             }
             catch (Exception exception)
             {
-                Log.Write(exception, "Error: CsTool.Logger: Failed to extract property({0}) from settings file.", propertyInfo.Name);
+                Logger.SafeWrite(exception, "Error: CsTool.Logger: Failed to extract property({0}) from settings file.", propertyInfo.Name);
                 errors++;
             }
             return result;
@@ -571,14 +629,14 @@
         /// <param name="propertyInfo"></param>
         /// <param name="classInstance"></param>
         /// <returns></returns>
-        public static object GetPropertyAsList(XElement settingsSection, PropertyInfo propertyInfo, object classInstance, ref Int32 errors)
+        private static object GetPropertyAsList(XElement settingsSection, PropertyInfo propertyInfo, object classInstance, ref Int32 errors)
         {
             object result = propertyInfo.GetValue(classInstance);
 
             if (!propertyInfo.PropertyType.Name.StartsWith("List"))
             {
                 errors++;
-                Log.Write(LogPriority.Verbose, "Warning: CsTool.Logger.GetPropertyAsList: Property({0}) is not a List", propertyInfo.Name);
+                Logger.SafeWrite(LogPriority.Verbose, "Warning: CsTool.Logger.GetPropertyAsList: Property({0}) is not a List", propertyInfo.Name);
                 return result;
             }
 
@@ -587,7 +645,7 @@
                 XElement element = settingsSection.Element(propertyInfo.Name + "T");
                 if (element == null)
                 {
-                    Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) not found", propertyInfo.Name);
+                    Logger.SafeWrite(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) not found", propertyInfo.Name);
                     return result;
                 }
                 int count = 0;
@@ -598,7 +656,7 @@
                 // convert typeName to Type
                 if (string.IsNullOrWhiteSpace(typeName))
                 {
-                    Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has no elementType, assuming int", propertyInfo.Name);
+                    Logger.SafeWrite(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has no elementType, assuming int", propertyInfo.Name);
                 }
                 else
                 {
@@ -606,7 +664,7 @@
                     elementType = Type.GetType(typeName);
                     if (elementType == null)
                     {
-                        Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has unknown elementType", propertyInfo.Name);
+                        Logger.SafeWrite(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has unknown elementType", propertyInfo.Name);
                         return result;
                     }
                 }
@@ -618,7 +676,7 @@
                 {
                     if ( subElement.HasElements)
                     {
-                        Log.Write(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has sub elements. Currently unsupported", propertyInfo.Name);
+                        Logger.SafeWrite(LogPriority.Warning, "CsTool.Logger.GetPropertyAsList: List Property({0}) has sub elements. Currently unsupported", propertyInfo.Name);
                         continue;
                     }
                     string tempString3 = subElement.Value.ToString();
@@ -629,7 +687,7 @@
                     }
                     catch (Exception exception)
                     {
-                        Log.Write(exception, "Error: CsTool.Logger: Failed to add element to list {0}", propertyInfo.Name);
+                        Logger.SafeWrite(exception, "Error: CsTool.Logger: Failed to add element to list {0}", propertyInfo.Name);
                         errors++;
                     }
                 }
@@ -638,7 +696,7 @@
             }
             catch (Exception exception)
             {
-                Log.Write(exception, "Error: CsTool.Logger: Failed to extract propertyValue {0} from settings file.", propertyInfo.Name);
+                Logger.SafeWrite(exception, "Error: CsTool.Logger: Failed to extract propertyValue {0} from settings file.", propertyInfo.Name);
                 errors++;
             }
             return result;
