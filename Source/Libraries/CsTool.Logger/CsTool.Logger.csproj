@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0-windows;net481</TargetFrameworks>
+    <TargetFrameworks>net8.0-windows;net10.0-windows;net481;net480</TargetFrameworks>
     <IntermediateOutputPath>C:\ProgramData\VisualStudio\$(SolutionName)\$(MSBuildProjectName)\obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWindowsForms>true</UseWindowsForms>
