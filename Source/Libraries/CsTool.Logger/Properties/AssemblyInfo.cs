@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("SHAWKY Electronics")]
 [assembly: AssemblyProduct("CsTool.Logger")]
-[assembly: AssemblyCopyright("Copyright ©  Shawky 2016 - 2025 and Client Use Rights")]
+[assembly: AssemblyCopyright("Copyright ©  Shawky 2016 - 2026 and Client Use Rights")]
 [assembly: AssemblyTrademark("https://github.com/cshawky")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.480.1")]
-[assembly: AssemblyFileVersion("2.0.480.1")]
+[assembly: AssemblyVersion("2.1.0.0")]
+[assembly: AssemblyFileVersion("2.1.0.0")]

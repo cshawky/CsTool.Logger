@@ -7,7 +7,9 @@ It is licenced under Apache License Version 2.0, January 2004 http://www.apache.
 CsTool.Logger is a simple adaptation of a very old C/C++ logger I ported to C# then simplified and optimised for good performance and simplicity and inclusion in Customer applications.
 
 ## Build environment
-The project is supported by [Visual Studio 2022](https://visualstudio.microsoft.com/de/vs/community/). It was last tested extensively using Framework 4.8.0 with basic testing under Core 3.1.
+The project is supported by [Visual Studio 2026](https://visualstudio.microsoft.com/de/vs/community/). It was last tested extensively using Framework 4.8.0 with basic testing under Core 3.1.
+
+If using Visual Studio 2022 the .Net 10 builds may not work.
 
 Performance testing was conducted against NLog and Serilog but those test projects have been excluded from this release to avoid the need for downloading NuGet packages you won't need as you would be using CsTool.Logger instead of NLog or Serilog.
 
@@ -15,9 +17,9 @@ CsTool.Logger will operate alongside NLog and Serilog but only if full namespace
 
 ## Version Information and Caveats
 
-CsTool.Logger.dll	Version 2.0.0 Beta (Stable)
+CsTool.Logger.dll	Version 2.1.0 (Stable)
 
-Download binaries from https://github.com/cshawky/CsTool.Logger/releases/tag/V2.0.0-Beta.0
+Version 2.1.0 now builds for both .Net 4.8.1 and .NET 10. It should be possible to build for earlier versions excepting the MessageBox method call.
 
 The latest release is currently only available by downloading the project and compiling it. NuGet packaging is on the list of things to do.
 
@@ -33,14 +35,18 @@ Others are welcome to contribute, though the author requests that changes be kep
 
 CsTool.Logger may be included into you Visual Studio project in a number of ways:
 * Directly into your C# application directly by including CsTool.LoggerSrc using VS code sharing and instantiating the logger in Program.cs
-* By including CsTool.Logger.dll in your .NET Framework project (C#, VB, ASP etc)
-* By including CsTool.Core.Logger.dll in your .NET Core project (C#, VB, ASP etc)
+* By including CsTool.Logger.dll in your .NET Framework or .NET Core project (C#, VB, ASP etc)
 
 CsTool.logger is intended to be simple and very efficient causing minimal disruption to process work flow. Only a basic understanding of C# is needed to use this library as a DLL or inline.
 
+With .NET 10 and Visual Studio 2026, the library is built for both .NET Framework and .NET Core. 
+The same source code is used for both implementations, with some conditional compilation to allow for differences in the underlying framework. The CsTool.LoggerSrc project contains the shared source code. The CsTool.Logger and CsTool.Core.Logger projects are the respective Framework and Core implementations that reference the shared source.
+
 The implementation manages programme folder locations for .NET Framework and will locate a suitable writeable location should the application be called from a read only location. 
-At this time .NET core code for checking writability of the folder location is not implemented. So ensure the log folder location used is writeable. The best way to achieve this
-is to start the application with the start up folder being a location other than Program Files. The logger will then create a subfolder called log under the startup location.
+
+At this time .NET core code for checking writability of the folder location is not implemented. 
+So ensure the log folder location used is writeable. 
+The best way to achieve this is to start the application with the start up folder being a location other than Program Files. The logger will then create a subfolder called log under the startup location.
 Multiple instances of an application may be run concurrently provided that either the application start up folder is unique or the Application selects a unique logger folder.
 
 This logger was tested against Serilog and NLog and for the use case I tested, was faster than both when used in Asynchronous mode, primarily due to its simplicity.
@@ -54,10 +60,6 @@ efficient solution but a little more effort and will necessitate inclusion of th
 The structure is such that it should be possible to expand the logger capability, though I have not tried this. If you have difficulty or suggestions on how the class structure should be revised, please assist.
 
 The solution contains multiple projects as described in each of the solution sections below:
-	
-### Tests\Test.Core.Logger2
-.NET Core Test Application using CsTool.Core.LoggerSrc directly without needing the DLL
-The test code itself is a shared project Test.LoggerSrc
 	
 ## Framework
 These projects demonstrate/test usage of CsTool.Logger DLL (or CsTool.LoggerSrc shred source)  with .NET Framework. The DLL has been used extensively with .NET Framework console and WPF applications and DLLs.
@@ -457,3 +459,10 @@ To name a few:
 * The XML Configuration file interface is cool, but needs documenting and a little more finess with an example.
 * Tweaks to Singleton instance in line with more recent C# practices.
 
+2026
+* Updated to support .NET 10 and Visual Studio 2026. The same source code.
+* New XML Configuration file now supports save from the user interface. Generating a new configuration settings section using a new class is much simpler.
+* Further modifications aimed to ensure all log messages are written before shutdown. Test code exists
+* but the root cause is not fully understood. At present only log messages in some destructors are not being logged
+* because those destructors are being executed after the log file has been closed and message queue remoed.
+* If there are critical messages to be captured they can be captured by the log of last resort anyway. Use SafeWrite().

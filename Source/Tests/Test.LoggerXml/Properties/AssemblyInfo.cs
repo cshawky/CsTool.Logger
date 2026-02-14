@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Test.Logger")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Test.LoggerXml")]
+[assembly: AssemblyDescription("Test the builtin XML configuration file utilities.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Test.Logger")]
-[assembly: AssemblyCopyright("Copyright ©  Shawky 2016 - 2020 and Client Use Rights")]
+[assembly: AssemblyCompany("SHAWKY Electronics")]
+[assembly: AssemblyProduct("Test.LoggerXml")]
+[assembly: AssemblyCopyright("Copyright ©  2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("32ca3d74-be4b-444a-b85f-0c1a0ff55644")]
+[assembly: Guid("5cef2430-291d-44bd-928f-445bb48b2a71")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -29,8 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-// You can specify all the values or you can default the Build and Revision Numbers
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: AssemblyVersion("2.1.0.0")]
+[assembly: AssemblyFileVersion("2.1.0.0")]

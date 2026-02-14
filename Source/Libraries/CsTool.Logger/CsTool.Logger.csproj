@@ -32,4 +32,7 @@
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "$(SolutionDir)\..\SignTool.cmd" Call "$(SolutionDir)\..\SignTool.cmd" "$(TargetPath)"</PostBuildEvent>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="CsTool.Logger.csproj.bak" />
+  </ItemGroup>
 </Project>
