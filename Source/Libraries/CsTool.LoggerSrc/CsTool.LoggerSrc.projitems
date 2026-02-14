@@ -10,8 +10,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods\Extensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Interfaces\IMessageBoxService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\LogAsHexDump.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\LogMessageSafe.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\MessageBox.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\ModelSettingsAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\QueuedMessageOptimised.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Model\SampleModelSettings.cs" />
@@ -26,6 +28,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logger\QueuedMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LogUtilities.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\AppDefaults.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\ConsoleMessageBoxService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\MessageBoxServiceExamples.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\SilentMessageBoxService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\WindowsFormsMessageBoxService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MyUtilities.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\AppDefaultsDocument.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\XmlSettingsParsing.cs" />

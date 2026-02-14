@@ -396,3 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+assessment.csv
+assessment.json
+assessment.md
+plan.md
+scenario.json
+/Framework/Libraries/CsTool.Logger/*.bak

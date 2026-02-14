@@ -41,7 +41,9 @@ namespace MyApplication
             // Testing async queueing
             //
             Logger.Instance.IsSynchronousLogger = false;        // Only available if DEBUG is defined: Default true
+#if DEBUG_QUEUE
             Logger.Instance.IsQueueAsyncEnabled = true;        // Only available if DEBUG is defined: Default true
+#endif
             Logger.Instance.AddMessageMaxTime = 0;
             message = "Testing CsTool.Logger Async File logging single thread producer, async queuing...";
             TestCsToolLogger1(count, bufferSize, threads, message);
@@ -51,13 +53,17 @@ namespace MyApplication
             //
             message = "Testing CsTool.Logger Async File logging single thread producer...";
             Logger.Instance.IsSynchronousLogger = false;        // Only available if DEBUG is defined: Default true
+#if DEBUG_QUEUE
             Logger.Instance.IsQueueAsyncEnabled = false;        // Only available if DEBUG is defined: Default true
+#endif
             Logger.Instance.AddMessageMaxTime = 0;
             TestCsToolLogger1(count, bufferSize, threads, message);
 
             message = "Testing CsTool.Logger Async File logging single thread producer, repeat...";
             Logger.Instance.IsSynchronousLogger = false;
+#if DEBUG_QUEUE
             Logger.Instance.IsQueueAsyncEnabled = false;
+#endif
             Logger.Instance.AddMessageMaxTime = 0;
             TestCsToolLogger1(count, bufferSize, threads, message);
 

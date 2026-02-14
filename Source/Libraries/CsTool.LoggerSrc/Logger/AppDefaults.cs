@@ -117,7 +117,7 @@
                 classInstance = this;
             }
 
-            if (fileName == null)
+            if (String.IsNullOrEmpty(fileName))
                 fileName = AppDefaultsFileName;
             //
             // Load settings from the application folder. Normally read only.
@@ -144,6 +144,29 @@
             return result;
         }
 
+        /// <summary>
+        /// Save the settings to the AppDefaults file.
+        /// </summary>
+        /// <param name="classInstance">The instance of a valid settings class, usually called from the settings class itself with "this"</param>
+        /// <param name="sectionName">Normally null. Provide a unique name for the settings file section where one is customising
+        /// or creating multiple sets of settings using the same class</param>
+        /// <param name="version">Optional version. Currently not used other than recording a version in the file</param>
+        /// <returns>True if settings save successfully. False otherwise.</returns>
+        /// <remarks>
+        /// Typical usage:
+        /// <code>
+        ///     [ModelSettingsClass]
+        ///     public class MyDllSettings : CommonSettingsViewModel
+        ///     {
+        ///         public void SaveSettings()
+        ///         {
+        ///             // IsSaveSettingsNeeded defined in CommonSettingsViewModel
+        ///             // Use IsSaveSettingsReadOnly for GUI animation or button enabling
+        ///             IsSaveSettingsNeeded = !Logger.Instance.SaveAppDefaults(this);
+        ///         }
+        ///     }
+        /// </code>
+        /// </remarks>
         public bool SaveAppDefaults(object classInstance, string sectionName = null, string version = "1.0.0")
         {
             bool isSaved = false;

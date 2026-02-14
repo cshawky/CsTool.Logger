@@ -13,6 +13,7 @@ namespace CsTool.Logger
     using System.IO;
     using System.Reflection;
 //#if NETFRAMEWORK
+    using System.Security;
     using System.Security.Permissions;
     //#endif
     using ExtensionMethods;

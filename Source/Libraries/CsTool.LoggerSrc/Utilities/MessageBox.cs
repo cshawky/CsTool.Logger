@@ -40,7 +40,7 @@ namespace CsTool.Logger
         /// <summary>
         /// Enable or disable the use of ShowMessage() if used in the code.
         /// </summary>
-        public static bool IsShowMessagesEnabledByDefault {  get => Instance.IsShowMessagesEnabledByDefault; set => Instance.IsShowMessagesEnabledByDefault = value; }
+        public static bool IsShowMessagesEnabledByDefault { get => Instance.IsShowMessagesEnabledByDefault; set => Instance.IsShowMessagesEnabledByDefault = value; }
 
         public static int ShowMessagesDisabledCount => Instance.ShowMessagesDisabledCount;
 

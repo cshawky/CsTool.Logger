@@ -15,10 +15,6 @@ namespace CsTool.Logger
     using System.Text;
     using ExtensionMethods;
     using Model;
-    //
-    // Should not be using Windows.Forms. Migrate to WPF or MAUI. Included for historic support.
-    //
-    using System.Windows.Forms;
 
 
     /// <summary>
@@ -27,6 +23,32 @@ namespace CsTool.Logger
     /// <remarks>Refer to <code>LogBase</code> for a better explanation</remarks>
     public partial class LogBase : ILogBase
     {
+        /// <summary>
+        /// Message box service for displaying dialogs. Platform-specific implementation.
+        /// </summary>
+        private static IMessageBoxService _messageBoxService;
+
+        /// <summary>
+        /// Get or set the message box service implementation.
+        /// Auto-initializes to platform-appropriate default if not explicitly set.
+        /// </summary>
+        public static IMessageBoxService MessageBoxService
+        {
+            get
+            {
+                if (_messageBoxService == null)
+                {
+                    // Auto-detect platform and use appropriate implementation
+#if NETFRAMEWORK
+                    _messageBoxService = new WindowsFormsMessageBoxService();
+#else
+                    _messageBoxService = new ConsoleMessageBoxService();
+#endif
+                }
+                return _messageBoxService;
+            }
+            set => _messageBoxService = value;
+        }
         //
         // -----------------------------------------------------------------------------------------
         //
@@ -126,28 +148,14 @@ namespace CsTool.Logger
         public bool ShowConfirmationMessage(string message, string title, bool doNotLogMessage)
         {
             // Show the message in a dialogue box
-            bool result = false;
-            DialogResult pressed = MessageBox.Show(message, title, MessageBoxButtons.YesNo);
-            switch (pressed)
-            {
-                case DialogResult.No:
-                case DialogResult.Cancel:
-                case DialogResult.None:
-                    result = false;
-                    break;
-
-                case DialogResult.OK:
-                case DialogResult.Yes:
-                    result = true;
-                    break;
-            }
+            bool result = MessageBoxService.ShowConfirmation(message, title);
 
             // By default all dialogue box messages are logged
             if (doNotLogMessage == false)
             {
                 // Log the message
                 string logMessage = "User Confirmation Message: " + title + " : " + message
-                    + "\nUser Confirmation Message Response: " + pressed + ", response treated as " + result + ".";
+                    + "\nUser Confirmation Message Response: " + (result ? "Yes" : "No");
                 Write(LogPriority.Always, logMessage);
             }
 
@@ -219,7 +227,7 @@ namespace CsTool.Logger
 
             // Show the message in a dialogue box
             if (IsShowMessagesEnabled)
-                MessageBox.Show(message, title);
+                MessageBoxService.Show(message, title);
         }
 
         #endregion Message Dialogue Boxes

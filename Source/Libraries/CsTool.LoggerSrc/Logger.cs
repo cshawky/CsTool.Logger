@@ -13,6 +13,27 @@ namespace CsTool.Logger
     using System.Xml.Linq;
     using System.Runtime.CompilerServices;
 
+#if DEBUG_LOGGER_EARLY_DESTRUCTION
+    // Exploring using a wrapper class instance to encourage other class instance to be destroyed
+    // before the logger is closed. This did not work as expect so the problem is elsewhere.
+    // What is the problem: Placing a log message in a class destructor does not necessarily get logged
+    // because that class destructor is being called after the log file and message queue are closed.
+    // The late destructor is running as its late save action works.
+    public class LogHandle
+    {
+        public LogBase Instance { get; } = Logger.Instance;
+
+        public LogHandle()
+        {
+            Logger.Write(LogPriority.Verbose,"LogHandle");
+        }
+
+        ~LogHandle()
+        {
+            Logger.Write(LogPriority.Verbose, "~LogHandle");
+        }
+    }
+#endif // DEBUG_LOGGER_EARLY_DESTRUCTION
     /// <summary>
     /// A Singleton instance for the Async/thread safe logger <code>ILogBase</code>.
     /// This provides a static entry point for logging without the need to
@@ -224,13 +245,13 @@ namespace CsTool.Logger
         // These methods are the latest implementations: Refer to class iLogBase for minimum interfaces.
         //
         public static void Close() => Instance.CloseAndFlush();
-        public static void CloseAndFlush(int maxWaitTime = 0, string closeReason = null) => Instance.CloseAndFlush(maxWaitTime, closeReason);
+        public static void CloseAndFlush(int maxWaitTime = 0, string closeReason = "") => Instance.CloseAndFlush(maxWaitTime, closeReason);
         public static string ConstructExceptionMessage(Exception exception, string simpleMessage) => Instance.ConstructExceptionMessage(exception, simpleMessage);
         public static void DisplayLogFile() => Instance.DisplayLogFile();
         public static bool IsLogPriorityEnabled(LogPriority level) => Instance.IsLogPriorityEnabled(level);
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
-        public static bool LoadAppDefaults(object classInstance, string sectionName, string version = "1.0.0", string fileName = null,
+        public static bool LoadAppDefaults(object classInstance, string sectionName, string version = "1.0.0", string fileName = "",
             bool createIfMissing = true, bool updateIfNeeded = true)
             => Instance.LoadAppDefaults(classInstance, sectionName, version, fileName, createIfMissing, updateIfNeeded);
 
