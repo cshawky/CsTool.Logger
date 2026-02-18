@@ -1,0 +1,119 @@
+﻿<Window x:Class="Test.LoggerWpfNet8.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Test.LoggerWpfNet8"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+
+    <Window.Resources>
+        <Style x:Key="ErrorVisibility"
+              BasedOn="{StaticResource BaseStyle1}"
+              TargetType="{x:Type FrameworkElement}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Model.IsErrorActive}" Value="true">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Model.IsErrorActive}" Value="false">
+                    <Setter Property="Visibility" Value="Hidden" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="EditVisibility"
+              BasedOn="{StaticResource BaseStyle1}"
+              TargetType="{x:Type FrameworkElement}">
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Model.IsSaveSettingsNeededReadOnly}" Value="true" />
+                        <!--  add other AND conditions here  -->
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="IsEnabled" Value="False" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding Model.IsSaveSettingsNeededReadOnly}" Value="false">
+                    <Setter Property="IsEnabled" Value="True" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ChangeNotApplied"
+              BasedOn="{StaticResource BaseStyle1}"
+              TargetType="{x:Type Button}">
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Model.IsChangesPending}" Value="True" />
+                        <!--  add other AND conditions here  -->
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="Yellow" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding Model.IsChangesPending}" Value="False">
+                    <Setter Property="Background" Value="White" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Background="{DynamicResource Background1}" LastChildFill="False">
+        <ScrollViewer x:Name="scrollActions" HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <WrapPanel Name="wrapButtonActions"
+                       Margin="2,2,2,2"
+                       Background="{DynamicResource Background2}"
+                       DockPanel.Dock="Left" Orientation="Vertical">
+                <WrapPanel.Resources>
+                    <Style BasedOn="{StaticResource BaseStyle1}" TargetType="{x:Type Button}">
+                        <Setter Property="RenderTransformOrigin" Value="0.5 0.5" />
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <RotateTransform />
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <EventTrigger RoutedEvent="Button.Click">
+                                <BeginStoryboard>
+                                    <Storyboard TargetProperty="RenderTransform.Angle">
+                                        <DoubleAnimation AutoReverse="True" FillBehavior="Stop"
+                                                         From="-2" To="2"
+                                                         Duration="0:0:0.1" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </WrapPanel.Resources>
+                <Button Content="Space" Visibility="Hidden" />
+
+                <RadioButton Name="radioButton3" Content="Settings Changed"
+                             HorizontalAlignment="Left" GroupName="n99"
+                             IsChecked="{Binding Model.Settings.IsSaveSettingsNeededReadOnly}"
+                             IsTabStop="False" ToolTip="Indicates whether the settings have changed or not." />
+
+                <Button Content="Edit Settings"
+                        Command="{Binding CommandEditSettings}"
+                        IsEnabled="{Binding EnableButtons}"
+                        Style="{StaticResource EditVisibility}"
+                        ToolTip="You may edit the settings via the user interface or externally with a text editor. If external you must restart the application for changes to take effect" />
+
+                <Button Content="Reload Settings"
+                        Command="{Binding CommandLoadSettings}"
+                        IsEnabled="{Binding EnableButtons}"
+                        Style="{StaticResource EditVisibility}"
+                        ToolTip="Reloading settings will lose all setup changes made. Use Load if you have edited the settings using an external editor." />
+
+                <Button Content="Save Settings"
+                        Command="{Binding CommandSaveSettings}"
+                        IsEnabled="{Binding Model.Settings.IsSaveSettingsNeededReadOnly}"
+                        Style="{StaticResource SaveVisibility}" />
+
+                <Button Content="Display Log File"
+                            Command="{Binding CommandDisplayLogFile}"
+                            ToolTip="Display the current log file" />
+            </WrapPanel>
+        </ScrollViewer>
+
+        <Grid>
+
+        </Grid>
+    </DockPanel>
+</Window>
