@@ -251,7 +251,7 @@ namespace CsTool.Logger
         public static bool IsLogPriorityEnabled(LogPriority level) => Instance.IsLogPriorityEnabled(level);
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
-        public static bool LoadAppDefaults(object classInstance, string sectionName, string version = "1.0.0", string fileName = "",
+        public static bool LoadAppDefaults(object classInstance, string sectionName, string version, string fileName = "",
             bool createIfMissing = true, bool updateIfNeeded = true)
             => Instance.LoadAppDefaults(classInstance, sectionName, version, fileName, createIfMissing, updateIfNeeded);
 

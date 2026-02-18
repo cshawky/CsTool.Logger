@@ -37,7 +37,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\XmlSettingsParsing.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)LICENCE.txt" />
+    <Content Include="$(MSBuildThisFileDirectory)LICENCE" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Model\" />

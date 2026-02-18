@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("CsTool.Logger")]
-[assembly: AssemblyDescription("Shawky's Core Support Utilities v2 - Async Fast File Logger")]
+[assembly: AssemblyDescription("CShawky's Core Support Utilities v2 - Async Fast File Logger")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("SHAWKY Electronics")]
 [assembly: AssemblyProduct("CsTool.Logger")]

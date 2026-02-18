@@ -107,7 +107,7 @@
         /// or properties failed to load correctly</param>
         /// <returns>True if the file was loaded successfully. False if the file requires upgrading</returns>
         /// Previously called LoadAppDefaults()
-        public bool LoadAppDefaults(object classInstance, string sectionName, string version = "1.0.0", string fileName = null,
+        public bool LoadAppDefaults(object classInstance, string sectionName, string version, string fileName = null,
             bool createIfMissing = true, bool updateIfNeeded = true)
         {
             if (classInstance == null)
@@ -167,7 +167,7 @@
         ///     }
         /// </code>
         /// </remarks>
-        public bool SaveAppDefaults(object classInstance, string sectionName = null, string version = "1.0.0")
+        public bool SaveAppDefaults(object classInstance, string sectionName, string version)
         {
             bool isSaved = false;
             if (AppDefaultsDocument != null && AppDefaultsDocument.IsLoaded && !AppDefaultsDocument.IsReadOnly )
@@ -352,7 +352,7 @@
         /// i.e. Create an XElement <CsTool.Logger></CsTool.Logger> with the default logging settings.
         /// </summary>
         /// <returns>The created XElement</returns>
-        public XElement AddLoggingElements_DontUse(object classInstance, string version = "1.0.0")
+        public XElement AddLoggingElements_DontUse(object classInstance, string version)
         {
             if (classInstance == null) classInstance = this;
             XElement xList = XmlSettingsParsing.AddClass(classInstance, null, version);

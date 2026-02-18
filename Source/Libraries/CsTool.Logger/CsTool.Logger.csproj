@@ -1,11 +1,37 @@
-ï»¿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0-windows;net10.0-windows;net481;net480</TargetFrameworks>
     <IntermediateOutputPath>C:\ProgramData\VisualStudio\$(SolutionName)\$(MSBuildProjectName)\obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>CsTool.Logger</PackageId>
+    <Version>2.1.0</Version>
+    <Authors>CShawky</Authors>
+    <Company>SHAWKY Electronics</Company>
+    <Product>CsTool.Logger</Product>
+    <Description>CsTool.Logger is a compact, fast, basic multi-threaded logger for C# .NET Core and .NET Framework.</Description>
+    <PackageTags>logging;logger;log;diagnostics;windows;WPF;MAUI;thread-safe;multi-target;csharp;net8;net10;net481;netframework;netcore;fast;lightweight;compact;async;appsettings;xml-config;config;configuration;config-reflection;options;serilog-alternative;nlog-alternative</PackageTags>
+    <Copyright>Copyright © CShawky $([System.DateTime]::Now.Year)</Copyright>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageIcon>ShawkyCar128x128.jpg</PackageIcon>
+
+    <!-- Package Generation Settings -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageOutputPath>$(SolutionDir)nupkg</PackageOutputPath>
+    <PackageReadmeFile>README_NUGET.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <!-- Include README and icon in package (no relative paths - files are in project directory) -->
+  <ItemGroup>
+    <None Include="README_NUGET.md" Pack="true" PackagePath="\" />
+	<None Include="ShawkyCar128x128.jpg" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Library</OutputType>
   </PropertyGroup>
@@ -26,12 +52,29 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Net.Http" />
-    <PackageReference Include="System.Security.Permissions" Version="8.0.0" />
+    <PackageReference Include="System.Security.Permissions" Version="10.0.3" />
   </ItemGroup>
   <Import Project="..\..\..\Source\Libraries\CsTool.LoggerSrc\CsTool.LoggerSrc.projitems" Label="Shared" />
+
+  <!-- Exclude all Content items from shared projects (they have invalid relative paths in package) -->
+  <ItemGroup>
+    <Content Update="**\LICENCE" Pack="false" />
+  </ItemGroup>
   <PropertyGroup>
+	  <!-- Post-build event to sign the assembly if SignTool.cmd exists in the solution directory -->
+	  <!-- This step occurs for each target framework build, ensuring all output assemblies are signed if the signing tool is available -->
     <PostBuildEvent>IF EXIST "$(SolutionDir)\..\SignTool.cmd" Call "$(SolutionDir)\..\SignTool.cmd" "$(TargetPath)"</PostBuildEvent>
   </PropertyGroup>
+
+  <!-- Copy NuGet package to local feed AFTER packing completes -->
+  <Target Name="CopyPackageToLocalFeed" AfterTargets="Pack">
+    <Message Text="Updating Local NuGet Feed with $(PackageId) $(Version)..." Importance="high" />
+    <MakeDir Directories="C:\DevLocal\LocalNuGetFeed" Condition="!Exists('C:\DevLocal\LocalNuGetFeed')" />
+    <Copy SourceFiles="$(PackageOutputPath)\$(PackageId).$(Version).nupkg" DestinationFolder="C:\DevLocal\LocalNuGetFeed" SkipUnchangedFiles="false" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).nupkg')" />
+    <Copy SourceFiles="$(PackageOutputPath)\$(PackageId).$(Version).snupkg" DestinationFolder="C:\DevLocal\LocalNuGetFeed" SkipUnchangedFiles="false" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).snupkg')" />
+    <Message Text="? Copied $(PackageId).$(Version).nupkg to local feed" Importance="high" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).nupkg')" />
+  </Target>
+
   <ItemGroup>
     <None Remove="CsTool.Logger.csproj.bak" />
   </ItemGroup>

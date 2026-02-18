@@ -277,10 +277,24 @@
         /// using the optional section name for that instance. By default the section name is the class name.
         /// </summary>
         /// <param name="classInstance">The class instance to load the section for</param>
+        /// <param name="sectionName">Uses the class Name</param>
+        /// <param name="version">Default 1.0.0</param>
+        /// <returns>True if successfully loaded</returns>
+        public bool LoadDocument(object classInstance)
+        {
+            // Use defaults, sectionName = classInstance.GetType().Name
+            return LoadDocument(classInstance, null, "1.0.0");
+        }
+
+        /// <summary>
+        /// Load the XML Document from file. The document is loaded for the specific class instance provided
+        /// using the optional section name for that instance. By default the section name is the class name.
+        /// </summary>
+        /// <param name="classInstance">The class instance to load the section for</param>
         /// <param name="sectionName">Optional section name overrides the class name for the XElement</param>
         /// <param name="version">The version expected for this section. The section should match or be newer to this version.</param>
         /// <returns>True if successfully loaded</returns>
-        public bool LoadDocument(object classInstance, string sectionName = null, string version = "1.0.0")
+        public bool LoadDocument(object classInstance, string sectionName, string version)
         {
             string methodName = nameof(LoadDocument);
             string className = classInstance.GetType().Name;
@@ -316,7 +330,7 @@
             //
             // Now validate the document structure, creating any missing elements if required.
             //
-            bool result = ValidateXDocument(classInstance, instanceSectionName);
+            bool result = ValidateXDocument(classInstance, instanceSectionName, version);
             if (result)
             {
                 Logger.SafeWrite(LogPriority.Verbose, "{0}: Element({1}.{2}) Successfully validated file: {3}",
@@ -339,8 +353,24 @@
         /// <summary>
         /// Save the Class Instance data into the XML Document, create it if necessary.
         /// </summary>
+        /// <param name="classInstance">The class instance to save the section for</param>
+        /// <param name="sectionName">Uses the class Name</param>
+        /// <param name="version">Default 1.0.0</param>
         /// <returns>True if successful</returns>
-        public bool SaveDocument(object classInstance, string sectionName = null, string version = "1.0.0")
+        public bool SaveDocument(object classInstance)
+        {
+            // Use defaults, sectionName = classInstance.GetType().Name
+            return SaveDocument(classInstance, null, "1.0.0");
+        }
+
+        /// <summary>
+        /// Save the Class Instance data into the XML Document, create it if necessary.
+        /// </summary>
+        /// <param name="classInstance">The class instance to save the section for</param>
+        /// <param name="sectionName">Optional section name overrides the class name for the XElement</param>
+        /// <param name="version">The version expected for this section. The section should match or be newer to this version.</param>
+        /// <returns>True if successful</returns>
+        public bool SaveDocument(object classInstance, string sectionName, string version)
         {
             string methodName = nameof(SaveDocument);
 
@@ -359,7 +389,7 @@
             {
                 XElement xNamespace = XDefaultSection?.Element(nameSpaceName);
                 XElement xClassSection = xNamespace?.Element(instanceSectionName);
-                if (ValidateXDocument(classInstance, instanceSectionName))
+                if (ValidateXDocument(classInstance, instanceSectionName, version))
                 {
                     // Update the XDocument with the latest values from the class instance.
                     xClassSection?.Remove();
@@ -435,8 +465,12 @@
         /// <param name="classInstance">An instance of the ModelSettingsClass</param>
         /// <param name="version">Optional version of the class instance</param>
         /// <returns>The created XElement</returns>
-        private static XElement AddElementsFromClassInstance(object classInstance, string sectionName, string version = "1.0.0")
+        private static XElement AddElementsFromClassInstance(object classInstance, string sectionName, string version)
         {
+            if ( String.IsNullOrEmpty(version))
+            {
+                version = "1.0.0";
+            }
             if (classInstance == null)
             {
                 throw new ArgumentNullException("AddElementsFromClassInstance: classInstance is null");
@@ -460,7 +494,7 @@
         /// The order of validation and create is constructed carefully to allow an existing document to be loaded without unnecessary
         /// modification, and the relevant section updated or replaced.
         /// </remarks>
-        private bool ValidateXDocument(object classInstance, string sectionName = null, string version = "1.0.0")
+        private bool ValidateXDocument(object classInstance, string sectionName, string version)
         {
             string methodName = nameof(ValidateXDocument);
             int countErrors = 0;
@@ -514,7 +548,7 @@
                 {
                     Logger.SafeWrite(LogPriority.Warning, "{0}: Missing settings XElement<{1}>: {2}",
                         methodName, instanceSectionName, FullFileName);
-                    xClassSection = AddElementsFromClassInstance(classInstance, version);
+                    xClassSection = AddElementsFromClassInstance(classInstance, sectionName, version);
                     xNamespace.Add(xClassSection);
                     IsUpgradeRequired = true;
                 }

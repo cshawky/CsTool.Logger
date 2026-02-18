@@ -6,10 +6,16 @@ It is licenced under Apache License Version 2.0, January 2004 http://www.apache.
 
 CsTool.Logger is a simple adaptation of a very old C/C++ logger I ported to C# then simplified and optimised for good performance and simplicity and inclusion in Customer applications.
 
+It has been performance tested against nlog and serilog for simple logging. It is used in real time and critical
+applications, avoiding the need for too many external libraries.
+
+You might also find the class based xml configuration file interface nice and simple compared to other solutions.
+
+
 ## Build environment
 The project is supported by [Visual Studio 2026](https://visualstudio.microsoft.com/de/vs/community/). It was last tested extensively using Framework 4.8.0 with basic testing under Core 3.1.
 
-If using Visual Studio 2022 the .Net 10 builds may not work.
+If using Visual Studio 2022 the .Net 10 builds don't work. Remove Net10 from the project build target.
 
 Performance testing was conducted against NLog and Serilog but those test projects have been excluded from this release to avoid the need for downloading NuGet packages you won't need as you would be using CsTool.Logger instead of NLog or Serilog.
 
@@ -19,9 +25,14 @@ CsTool.Logger will operate alongside NLog and Serilog but only if full namespace
 
 CsTool.Logger.dll	Version 2.1.0 (Stable)
 
-Version 2.1.0 now builds for both .Net 4.8.1 and .NET 10. It should be possible to build for earlier versions excepting the MessageBox method call.
+Version 2.1.0 now builds for .Net 4.8.0, 4.8.1, .NET 8 and .NET 10.
+
+The only method that might cause issues is the MessageBox method that I have left in for very old app
+compatibility. I used Copilot modernize to assist make it .NET compatible, it compiles but is not tested. In the future
+it is not intended for this library to have any direct windows interface dependency.
 
 The latest release is currently only available by downloading the project and compiling it. NuGet packaging is on the list of things to do.
+- now testing NeGet.
 
 The toolset DLL is labelled Version 2 as this project is a consolidation/simplification of earlier logging implementations (v1.x) to a form suitable for sharing and caring. This is the author's first sizeable project release to GitHub. The author only codes part time, more so as a hobby than anything else. Use in the work environment is limited, though an earlier synchronous release (v1) of this code has been included in critical real-time applications that have been operating 24x7 quite successfully for many years dating back to .NET 2.0. The asynchronous queueing was not present. An even earlier release would support C, C++ on GCC, windows and embedded systems. As such the underlying framework as simple as it is should be mature. The author uses this logger library in every single project.
 
@@ -377,7 +388,7 @@ The enumerations are described below as excerpt from LogPriority.cs
 ```
 
 # Application Defaults
-The XmlSettingsParsing class provides a generic interface that allows for class based settings to be retrieved and saved
+The AppDefaults class provides a generic interface that allows for class based settings to be retrieved and saved
 to the AppDefaults file. Abstraction is achieved using Class custom attributes.
 
 ```C#
