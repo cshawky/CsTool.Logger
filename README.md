@@ -1,4 +1,4 @@
-# Introduction
+# CsTool.Logger : Overview
 
 CsTool.Logger is a compact, fast, basic multi-threaded logger for C# .NET Core and .NET Framework.
 
@@ -11,6 +11,16 @@ applications, avoiding the need for too many external libraries.
 
 You might also find the class based xml configuration file interface nice and simple compared to other solutions.
 
+## Where are my log files?
+
+The location of the log files is determined by the application startup folder and the log directory settings. 
+By default, log files are stored in a "Logs" subfolder within the application's startup directory. If this location is not writable, the logger will attempt to use the user's AppData\Local\Temp folder as a fallback.
+
+i.e. %TEMP%\\Logs\\%APPNAME%
+
+For lower level diagnostics, the logs for startup of CsTool.Logger itself are stored in %TEMP%\Logs\CsTool.Logger, 
+then merged with the application logs once the logger itself has started. 
+On shut down or crash where a race condition occurs, the SafeWrite() methods will write directly to the log file without using the queue, if the loggers message queue is gone.
 
 ## Build environment
 The project is supported by [Visual Studio 2026](https://visualstudio.microsoft.com/de/vs/community/). It was last tested extensively using Framework 4.8.0 with basic testing under Core 3.1.
@@ -47,6 +57,7 @@ Others are welcome to contribute, though the author requests that changes be kep
 CsTool.Logger may be included into you Visual Studio project in a number of ways:
 * Directly into your C# application directly by including CsTool.LoggerSrc using VS code sharing and instantiating the logger in Program.cs
 * By including CsTool.Logger.dll in your .NET Framework or .NET Core project (C#, VB, ASP etc)
+* NuGet package - now recommended for VS2022 and earlier as the project uses VS2026 for .NET10 support.
 
 CsTool.logger is intended to be simple and very efficient causing minimal disruption to process work flow. Only a basic understanding of C# is needed to use this library as a DLL or inline.
 

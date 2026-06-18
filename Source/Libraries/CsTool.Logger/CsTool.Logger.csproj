@@ -8,13 +8,13 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>CsTool.Logger</PackageId>
-    <Version>2.1.0</Version>
+    <Version>0.2.1-prerelease</Version>
     <Authors>CShawky</Authors>
     <Company>SHAWKY Electronics</Company>
     <Product>CsTool.Logger</Product>
     <Description>CsTool.Logger is a compact, fast, basic multi-threaded logger for C# .NET Core and .NET Framework.</Description>
     <PackageTags>logging;logger;log;diagnostics;windows;WPF;MAUI;thread-safe;multi-target;csharp;net8;net10;net481;netframework;netcore;fast;lightweight;compact;async;appsettings;xml-config;config;configuration;config-reflection;options;serilog-alternative;nlog-alternative</PackageTags>
-    <Copyright>Copyright © CShawky $([System.DateTime]::Now.Year)</Copyright>
+    <Copyright>Copyright ï¿½ CShawky $([System.DateTime]::Now.Year)</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>ShawkyCar128x128.jpg</PackageIcon>
 

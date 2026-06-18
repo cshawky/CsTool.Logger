@@ -1,6 +1,8 @@
-# Introduction
+# CsTool.Logger : Overview Nuget
 
 CsTool.Logger is a compact, fast, basic multi-threaded, thread safe logger for C# .NET Core and .NET Framework.
+
+Logger Release 2.1.0 - Nuget 0.2.1 to verify NuGet and multi framework targeting.
 
 It is licenced under Apache License Version 2.0, January 2004 http://www.apache.org/licenses/
 
@@ -14,7 +16,7 @@ You might also find the class based xml configuration file interface nice and si
 
 Find more information on [GitHub CShawky CsTool.Logger](https://github.com/cshawky/CsTool.Logger)
 
-Built using Visual Studio 2026 packages for net480, net481, net8, net10.
+Built using Visual Studio 2026 packages for net480, net481, net8, net10. For VS 2022 use the Nuget package.
 
 For support of older frameworks best to download, remove new frameworks, add the older one. You may need to remove or modify the MessageBox interface that I have left there for my old legacy code support.
 

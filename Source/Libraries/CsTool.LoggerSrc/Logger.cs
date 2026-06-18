@@ -251,9 +251,16 @@ namespace CsTool.Logger
         public static bool IsLogPriorityEnabled(LogPriority level) => Instance.IsLogPriorityEnabled(level);
         public static void LogCommand(LogCommandAction logCommand) => Instance.LogCommand(logCommand);
         public static void LogCommand(LogCommandAction logCommand, params object[] args) => Instance.LogCommand(logCommand, args);
+        public static bool LoadAppDefaults(object classInstance) => Instance.LoadAppDefaults(classInstance);
+
         public static bool LoadAppDefaults(object classInstance, string sectionName, string version, string fileName = "",
             bool createIfMissing = true, bool updateIfNeeded = true)
             => Instance.LoadAppDefaults(classInstance, sectionName, version, fileName, createIfMissing, updateIfNeeded);
+
+        public bool SaveAppDefaults(object classInstance) => Instance.SaveAppDefaults(classInstance);
+
+        public bool SaveAppDefaults(object classInstance, string sectionName, string version)
+            => Instance.SaveAppDefaults(classInstance, sectionName, version);
 
         /// <summary>
         /// Set the base directory for all logging. The default location is {StartupPath}\Logs.

@@ -91,7 +91,18 @@
 
         #endregion App Defaults
 
-
+        /// <summary>
+        /// Load settings for a class instance from your application defaults file. The application folder is checked first
+        /// then the startup folder for localised settings. This method is normally incorporated into a settings class for a DLL
+        /// and application. Use LoadSettingsFile() for custom settings in a separate or same file.
+        /// </summary>
+        /// <param name="classInstance">The Settings object that contains all settings to be saved for this Class.
+        /// If null, this class instance will be used.</param>
+        /// <returns>True if the file was loaded successfully. False if the file requires upgrading</returns>
+        public bool LoadAppDefaults(object classInstance)
+        {
+            return LoadAppDefaults(classInstance, null, null);
+        }
         /// <summary>
         /// Load settings for a class instance from your application defaults file. The application folder is checked first
         /// then the startup folder for localised settings. This method is normally incorporated into a settings class for a DLL
@@ -106,7 +117,6 @@
         /// <param name="updateIfNeeded">If true, the file will be updated if the version is older than the current version
         /// or properties failed to load correctly</param>
         /// <returns>True if the file was loaded successfully. False if the file requires upgrading</returns>
-        /// Previously called LoadAppDefaults()
         public bool LoadAppDefaults(object classInstance, string sectionName, string version, string fileName = null,
             bool createIfMissing = true, bool updateIfNeeded = true)
         {
@@ -142,6 +152,16 @@
             UserDefaultsDocument = new AppDefaultsDocument(classInstance, sectionName, version, sourceFile2, createIfMissing);
             result = UserDefaultsDocument.IsLoaded;
             return result;
+        }
+
+        /// <summary>
+        /// Save the settings to the AppDefaults file.
+        /// </summary>
+        /// <param name="classInstance">The instance of a valid settings class, usually called from the settings class itself with "this"</param>
+        /// <returns>True if settings save successfully. False otherwise.</returns>
+        public bool SaveAppDefaults(object classInstance)
+        {
+            return SaveAppDefaults(classInstance, null, null);
         }
 
         /// <summary>
