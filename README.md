@@ -11,6 +11,8 @@ applications, avoiding the need for too many external libraries.
 
 You might also find the class based xml configuration file interface nice and simple compared to other solutions.
 
+Special Note: CsTool.Logger will be available on NUGET soon for multiple frameworks. The NUGET Pre Release is in use with all of my existing apps.
+
 ## Where are my log files?
 
 The location of the log files is determined by the application startup folder and the log directory settings. 
@@ -25,7 +27,7 @@ On shut down or crash where a race condition occurs, the SafeWrite() methods wil
 ## Build environment
 The project is supported by [Visual Studio 2026](https://visualstudio.microsoft.com/de/vs/community/). It was last tested extensively using Framework 4.8.0 with basic testing under Core 3.1.
 
-If using Visual Studio 2022 the .Net 10 builds don't work. Remove Net10 from the project build target.
+If using Visual Studio 2022 the .Net 10 builds don't work. Remove Net10 from the project build target. (Or use the nuget package)
 
 Performance testing was conducted against NLog and Serilog but those test projects have been excluded from this release to avoid the need for downloading NuGet packages you won't need as you would be using CsTool.Logger instead of NLog or Serilog.
 
@@ -82,9 +84,12 @@ efficient solution but a little more effort and will necessitate inclusion of th
 The structure is such that it should be possible to expand the logger capability, though I have not tried this. If you have difficulty or suggestions on how the class structure should be revised, please assist.
 
 The solution contains multiple projects as described in each of the solution sections below:
-	
+
 ## Framework
 These projects demonstrate/test usage of CsTool.Logger DLL (or CsTool.LoggerSrc shred source)  with .NET Framework. The DLL has been used extensively with .NET Framework console and WPF applications and DLLs.
+
+### NUGET
+Multiple frameworks are supported by the NUGET package (currently under local test for pre release).
 
 ### Libraries\CsTool.Logger
 .NET Framework DLL: Include this DLL in your .NET core project. See Tests\Test.Core.Logger1 for usage.
