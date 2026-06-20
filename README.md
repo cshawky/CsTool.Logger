@@ -1,23 +1,82 @@
 # CsTool.Logger : Overview
 
-CsTool.Logger is a compact, fast, basic multi-threaded logger for C# .NET Core and .NET Framework.
+![ShawkyCar Logo](https://raw.githubusercontent.com/cshawky/CsTool.Logger/main/Source/Libraries/CsTool.Logger/ShawkyCar128x128.jpg)
 
-It is licenced under Apache License Version 2.0, January 2004 http://www.apache.org/licenses/
+CsTool.Logger is a lightweight, compact, fast, thread safe logger for C# .NET Core and .NET Framework applications.
 
-CsTool.Logger is a simple adaptation of a very old C/C++ logger I ported to C# then simplified and optimised for good performance and simplicity and inclusion in Customer applications.
+CsTool.Logger also provides an application XML settings file that is auto generated through your settings class(es) by applying attributes such as [ModelSettingsClass], [ModelSettingsProperty].
 
-It has been performance tested against nlog and serilog for simple logging. It is used in real time and critical
-applications, avoiding the need for too many external libraries.
+CsTool.Logger logs to file and/or console. It has been performance tested against nlog and serilog for simple file logging. It is used in real time and critical
+applications, avoiding the need for too many external libraries. You might also find the class based xml configuration file interface nice and simple compared to other solutions.
 
-You might also find the class based xml configuration file interface nice and simple compared to other solutions.
+## License
 
-Special Note: CsTool.Logger will be available on NUGET soon for multiple frameworks. The NUGET Pre Release is in use with all of my existing apps.
+Licenced under Apache License Version 2.0, January 2004 http://www.apache.org/licenses/
+Other license models available on request.
 
-## NUGET
+## Documentation and source
 
-For now I have included the NUGET files in a folder .\nupkg whilst testing the NUGET process. Works fine, just time poor ATM to complete a proper NUGET release. This pre release is working fine on framework 4.8.0 and 4.8.1. My main concern was simply having the NUGET release look professional with icon and readme integrated. That is working so consider this a full release. Core builds are untested.
+- Repository: https://github.com/cshawky/CsTool.Logger
+- Issues: https://github.com/cshawky/CsTool.Logger/issues
 
-I use the path C:\Dev\LocalNuGetFeed\ for local package testing and usage. Helps with managing development in an isolated or critical infrastructure secure environment.
+## Notes
+
+- Package is multi-targeted for modern .NET and .NET Framework.
+- Symbols package (`.snupkg`) is produced for debugging support.
+- Local development feed usage is controlled by solution `nuget.config`.
+
+## Quick start Logging
+```c#
+using CsTool.Logger;
+...
+Logger.Write("Application started"); 
+Logger.Write(LogEventLevel.Verbose, "Args: {0}", string.Join(" ", args));
+try 
+{
+    // work 
+} 
+catch (Exception exception)
+{ 
+    Logger.Write(exception, "Unhandled exception");
+}
+finally
+{
+    Logger.Write("Application exiting");
+}
+```
+
+## Quick Start AppDefaults
+```c#
+    using CsTool.Logger;
+    [ModelSettingsClass]
+    public class SampleModelSettings
+    {
+        [ModelSettingsProperty]
+        public string Name { get; set; } = "Settings1";
+
+        [ModelSettingsProperty]
+        public List<string> StringList { get; set; } = new List<string> { "Value1", "Value2", @"C:\ProgramData\TestFolder" };
+
+        [ModelSettingsPropertyWithSubstitutions]
+        public List<string> StringListSubstituted { get; set; } = new List<string> { "Value1", "Value2", @"C:\ProgramData\TestFolder" };
+
+        [ModelSettingsInstance]
+        public AnotherSettingsClass AnotherSetting { get; set; } = new AnotherSettingsClass();
+
+    } 
+```
+See .\Source\CsTool.LoggerSrc\Model\SampleModelSettings.cs for a more complete example of the settings class and the resulting XML configuration file.
+
+## Why use CsTool.Logger?
+
+* Simple to use, with a single static class interface for most users.
+* Fast and efficient, with asynchronous queueing and minimal locking.
+* Available as a nuget package, DLL or shared source.
+* As shared source project within Visual Studio it may be compiled inside your application or DDL avoiding the need to include external DLLs.
+* Allows for custom logging interfaces to be added to the library by extending the LogBase class and including the shared source in your own project.
+* With the source one can easily create custom log interfaces, profile them for maxmum performance.
+
+For more complex logging needs, consider using Serilog or NLog. Both are excellent/world leading logging solutions.
 
 ## Where are my log files?
 
@@ -41,18 +100,15 @@ CsTool.Logger will operate alongside NLog and Serilog but only if full namespace
 
 ## Version Information and Caveats
 
-CsTool.Logger.dll	Version 2.1.0 (Stable)
+CsTool.Logger.dll	Version 2.1.0 (Stable), Nuget 0.2.1-PreRelease or newer
 
 Version 2.1.0 now builds for .Net 4.8.0, 4.8.1, .NET 8 and .NET 10.
 
+This library has been in use running on 24x7 applications in closed environments (multiple clients) for many years. Release to Github allows formalisation of its multi client use and ensures full rights to clients into the future.
+
 The only method that might cause issues is the MessageBox method that I have left in for very old app
-compatibility. I used Copilot modernize to assist make it .NET compatible, it compiles but is not tested. In the future
+compatibility. I used Copilot modernize to assist make it .NET compatible, it compiles but has not been tested for .Net 8/10. In the future
 it is not intended for this library to have any direct windows interface dependency.
-
-The latest release is currently only available by downloading the project and compiling it. NuGet packaging is on the list of things to do.
-- now testing NeGet.
-
-The toolset DLL is labelled Version 2 as this project is a consolidation/simplification of earlier logging implementations (v1.x) to a form suitable for sharing and caring. This is the author's first sizeable project release to GitHub. The author only codes part time, more so as a hobby than anything else. Use in the work environment is limited, though an earlier synchronous release (v1) of this code has been included in critical real-time applications that have been operating 24x7 quite successfully for many years dating back to .NET 2.0. The asynchronous queueing was not present. An even earlier release would support C, C++ on GCC, windows and embedded systems. As such the underlying framework as simple as it is should be mature. The author uses this logger library in every single project.
 
 V2 is stable and was created and bench marked against both NLog and Serilog as an exercise to determine if it was productive to continue supporting one's own logger library or adopting a 3rd party library. The conclusion was to maintain one's own library (due to simplicity and good performance) but massage it into a form that might be re useable by others. Deep inspection of the source code may identify the odd inconsistency in functional comments, i.e. referencing a feature that does not appear to exist in this release. This is a consequence of migrating legacy code, simplifying and removing code bloat et al to create this simpler implementation.
 

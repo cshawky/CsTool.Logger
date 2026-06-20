@@ -52,7 +52,7 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Net.Http" />
-    <PackageReference Include="System.Security.Permissions" Version="10.0.3" />
+    <PackageReference Include="System.Security.Permissions" Version="10.0.9" />
   </ItemGroup>
   <Import Project="..\..\..\Source\Libraries\CsTool.LoggerSrc\CsTool.LoggerSrc.projitems" Label="Shared" />
 
@@ -64,14 +64,18 @@
 	  <!-- Post-build event to sign the assembly if SignTool.cmd exists in the solution directory -->
 	  <!-- This step occurs for each target framework build, ensuring all output assemblies are signed if the signing tool is available -->
     <PostBuildEvent>IF EXIST "$(SolutionDir)\..\SignTool.cmd" Call "$(SolutionDir)\..\SignTool.cmd" "$(TargetPath)"</PostBuildEvent>
+    <PackageProjectUrl>https://github.com/cshawky/CsTool.Logger</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/cshawky/CsTool.Logger</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Title>CsTool.Logger Simple Fast Logger</Title>
   </PropertyGroup>
 
   <!-- Copy NuGet package to local feed AFTER packing completes -->
   <Target Name="CopyPackageToLocalFeed" AfterTargets="Pack">
     <Message Text="Updating Local NuGet Feed with $(PackageId) $(Version)..." Importance="high" />
-    <MakeDir Directories="C:\DevLocal\LocalNuGetFeed" Condition="!Exists('C:\DevLocal\LocalNuGetFeed')" />
-    <Copy SourceFiles="$(PackageOutputPath)\$(PackageId).$(Version).nupkg" DestinationFolder="C:\DevLocal\LocalNuGetFeed" SkipUnchangedFiles="false" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).nupkg')" />
-    <Copy SourceFiles="$(PackageOutputPath)\$(PackageId).$(Version).snupkg" DestinationFolder="C:\DevLocal\LocalNuGetFeed" SkipUnchangedFiles="false" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).snupkg')" />
+    <MakeDir Directories="C:\Dev\LocalNuGetFeed" Condition="!Exists('C:\Dev\LocalNuGetFeed')" />
+    <Copy SourceFiles="$(PackageOutputPath)\$(PackageId).$(Version).nupkg" DestinationFolder="C:\Dev\LocalNuGetFeed" SkipUnchangedFiles="false" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).nupkg')" />
+    <Copy SourceFiles="$(PackageOutputPath)\$(PackageId).$(Version).snupkg" DestinationFolder="C:\Dev\LocalNuGetFeed" SkipUnchangedFiles="false" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).snupkg')" />
     <Message Text="? Copied $(PackageId).$(Version).nupkg to local feed" Importance="high" Condition="Exists('$(PackageOutputPath)\$(PackageId).$(Version).nupkg')" />
   </Target>
 

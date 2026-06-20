@@ -1,22 +1,112 @@
-# CsTool.Logger : Overview Nuget
+# CsTool.Logger : Nuget Overview
+![ShawkyCar Logo](https://raw.githubusercontent.com/cshawky/CsTool.Logger/main/Source/Libraries/CsTool.Logger/ShawkyCar128x128.jpg)
 
-CsTool.Logger is a compact, fast, basic multi-threaded, thread safe logger for C# .NET Core and .NET Framework.
+CsTool.Logger is a lightweight, compact, fast, thread safe logger for C# .NET Core and .NET Framework applications.
 
-Logger Release 2.1.0 - Nuget 0.2.1 to verify NuGet and multi framework targeting.
+CsTool.Logger also provides an application XML settings file that is auto generated through your settings class(es) by applying attributes such as [ModelSettingsClass], [ModelSettingsProperty].
 
-It is licenced under Apache License Version 2.0, January 2004 http://www.apache.org/licenses/
+CsTool.Logger logs to file and/or console. It has been performance tested against nlog and serilog for simple file logging. It is used in real time and critical
+applications, avoiding the need for too many external libraries. You might also find the class based xml configuration file interface nice and simple compared to other solutions.
+
+## Installation
+
+NuGet package available from:
+- NuGet https://www.nuget.org/profiles/CShawky
+- GitHub https://github.com/cshawky/CsTool.Logger/tree/main/nupkg
+- Or install directly from the command line:
+```C#
+    dotnet add package CsTool.Logger
+```
+
+## Supported target frameworks
+
+- `net8.0-windows`
+- `net10.0-windows`
+- `net481`
+- `net480`
+- Want more, just ask: https://github.com/cshawky/CsTool.Logger/discussions
+
+
+## License
+
+Licenced under Apache License Version 2.0, January 2004 http://www.apache.org/licenses/
+Other license models available on request.
+
+## Documentation and source
+
+- Repository: https://github.com/cshawky/CsTool.Logger
+- Issues: https://github.com/cshawky/CsTool.Logger/issues
+
+## Notes
+
+- Package is multi-targeted for modern .NET and .NET Framework.
+- Symbols package (`.snupkg`) is produced for debugging support.
+- Local development feed usage is controlled by solution `nuget.config`.
+
+## Quick start Logging
+```c#
+using CsTool.Logger;
+...
+Logger.Write("Application started"); 
+Logger.Write(LogEventLevel.Verbose, "Args: {0}", string.Join(" ", args));
+try 
+{
+    // work 
+} 
+catch (Exception exception)
+{ 
+    Logger.Write(exception, "Unhandled exception");
+}
+finally
+{
+    Logger.Write("Application exiting");
+}
+```
+
+## Quick Start AppDefaults
+```c#
+    using CsTool.Logger;
+    [ModelSettingsClass]
+    public class SampleModelSettings
+    {
+        [ModelSettingsProperty]
+        public string Name { get; set; } = "Settings1";
+
+        [ModelSettingsProperty]
+        public List<string> StringList { get; set; } = new List<string> { "Value1", "Value2", @"C:\ProgramData\TestFolder" };
+
+        [ModelSettingsPropertyWithSubstitutions]
+        public List<string> StringListSubstituted { get; set; } = new List<string> { "Value1", "Value2", @"C:\ProgramData\TestFolder" };
+
+        [ModelSettingsInstance]
+        public AnotherSettingsClass AnotherSetting { get; set; } = new AnotherSettingsClass();
+
+    } 
+```
+See .\Source\CsTool.LoggerSrc\Model\SampleModelSettings.cs for a more complete example of the settings class and the resulting XML configuration file.
+
+## More Information
 
 CsTool.Logger is a simple adaptation of a very old C/C++ logger I ported to C# then simplified and optimised for good performance and simplicity and inclusion in Customer applications.
 
+Target applications:
+- Real time applications
+- Small and compact applications
+- Embed the logger source into the application to avoid the need for external libraries and dependencies. (optional)
+- Very fast, include thread Id in the logger output, support multiple log files
+- Application and DLL XML configuration file (programme and user friendly compared to VS Application Settings.
+- Application Settings file integrates with a Settings class in each DLL and application.
+
+
 It has been performance tested against nlog and serilog for simple logging appearing faster for the simple logging tested.
 
-It is used in real time and critical applications, avoiding the need for too many external libraries.
+It is used in customer bespoke real time and critical applications 24 x 7 x 365, avoiding the need for external libraries.
 
 You might also find the class based xml configuration file interface nice and simple compared to other solutions.
 
 Find more information on [GitHub CShawky CsTool.Logger](https://github.com/cshawky/CsTool.Logger)
 
-Built using Visual Studio 2026 packages for net480, net481, net8, net10. For VS 2022 use the Nuget package.
+Built using Visual Studio 2022 or 2026 packages for net480, net481, net8, net10. For VS 2022 use the Nuget package.
 
 For support of older frameworks best to download, remove new frameworks, add the older one. You may need to remove or modify the MessageBox interface that I have left there for my old legacy code support.
 
@@ -55,7 +145,7 @@ Alternative, post a request on the repository.
 		}
 	}
 ```
-NLog and Serilog basic log method syntax are also supported. Such as Debug(), Info(). (proof of concept only)
+NLog and Serilog basic log method syntax are also supported. Such as Debug(), Info(). (proof of concept and performance comparison only).
 
 # Application Defaults
 The AppDefaults class provides a generic interface that allows for class based settings to be retrieved and saved

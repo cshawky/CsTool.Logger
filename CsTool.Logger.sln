@@ -11,14 +11,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{EFBE5641
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CsTool.LoggerSrc", "Source\Libraries\CsTool.LoggerSrc\CsTool.LoggerSrc.shproj", "{0D328CE9-244C-4B17-B056-AEE758A3AB78}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{24B28C5C-59FE-4FE4-B4B5-3873031400BC}"
-EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Test.LoggerSrc", "Source\Tests\Test.LoggerSrc\Test.LoggerSrc.shproj", "{C77751CA-5D66-4DF0-B959-7E07F70576DC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "~Doc", "~Doc", "{AEE45B3A-66E2-4EFF-8992-3D719BA2AB6F}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE = LICENSE
+		nuget.config = nuget.config
 		README.md = README.md
+		Source\Libraries\CsTool.Logger\README_NUGET.md = Source\Libraries\CsTool.Logger\README_NUGET.md
 	EndProjectSection
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Test.LoggerXmlSrc", "Source\Tests\Test.LoggerXmlSrc\Test.LoggerXmlSrc.shproj", "{96469CED-0F97-45A1-A5AE-10AED4029490}"

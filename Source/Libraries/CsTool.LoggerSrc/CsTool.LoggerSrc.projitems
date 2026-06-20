@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Interfaces\IMessageBoxService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\LogAsHexDump.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\LogMessageSafe.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Model\AnotherSettingsClass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MessageBox.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\ModelSettingsAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logger\QueuedMessageOptimised.cs" />
@@ -38,8 +39,5 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)LICENCE" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Model\" />
   </ItemGroup>
 </Project>
