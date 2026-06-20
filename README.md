@@ -13,6 +13,12 @@ You might also find the class based xml configuration file interface nice and si
 
 Special Note: CsTool.Logger will be available on NUGET soon for multiple frameworks. The NUGET Pre Release is in use with all of my existing apps.
 
+## NUGET
+
+For now I have included the NUGET files in a folder .\nupkg whilst testing the NUGET process. Works fine, just time poor ATM to complete a proper NUGET release. This pre release is working fine on framework 4.8.0 and 4.8.1. My main concern was simply having the NUGET release look professional with icon and readme integrated. That is working so consider this a full release. Core builds are untested.
+
+I use the path C:\Dev\LocalNuGetFeed\ for local package testing and usage. Helps with managing development in an isolated or critical infrastructure secure environment.
+
 ## Where are my log files?
 
 The location of the log files is determined by the application startup folder and the log directory settings. 
@@ -25,7 +31,7 @@ then merged with the application logs once the logger itself has started.
 On shut down or crash where a race condition occurs, the SafeWrite() methods will write directly to the log file without using the queue, if the loggers message queue is gone.
 
 ## Build environment
-The project is supported by [Visual Studio 2026](https://visualstudio.microsoft.com/de/vs/community/). It was last tested extensively using Framework 4.8.0 with basic testing under Core 3.1.
+The project is supported by [Visual Studio 2026](https://visualstudio.microsoft.com/de/vs/community/) and Visual Studio 2022. It was last tested extensively using Framework 4.8.0 with basic testing under Core 3.1.
 
 If using Visual Studio 2022 the .Net 10 builds don't work. Remove Net10 from the project build target. (Or use the nuget package)
 
