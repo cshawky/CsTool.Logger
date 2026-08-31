@@ -97,6 +97,18 @@
     [ModelSettingsClass]
     public class SampleModelSettings
     {
+        // Optional version reference
+        private const string version = "1.0.0";
+
+        public SampleModelSettings()
+        {
+            Logger.LoadAppDefaults(this, null, version);
+        }
+
+        public void Save()
+        {
+            Logger.AppDefaultsDocument.SaveDocument(this, null, version);
+        }
 
         /// <summary>
         /// The Name that uses this configuration settings data set.

@@ -2,6 +2,8 @@
 
 ![ShawkyCar Logo](https://raw.githubusercontent.com/cshawky/CsTool.Logger/main/Source/Libraries/CsTool.Logger/ShawkyCar128x128.jpg)
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 CsTool.Logger is a lightweight, compact, fast, thread safe logger for C# .NET Core and .NET Framework applications.
 
 CsTool.Logger also provides an application XML settings file that is auto generated through your settings class(es) by applying attributes such as [ModelSettingsClass], [ModelSettingsProperty].
@@ -9,15 +11,11 @@ CsTool.Logger also provides an application XML settings file that is auto genera
 CsTool.Logger logs to file and/or console. It has been performance tested against nlog and serilog for simple file logging. It is used in real time and critical
 applications, avoiding the need for too many external libraries. You might also find the class based xml configuration file interface nice and simple compared to other solutions.
 
-## License
-
-Licenced under Apache License Version 2.0, January 2004 http://www.apache.org/licenses/
-Other license models available on request.
-
 ## Documentation and source
 
 - Repository: https://github.com/cshawky/CsTool.Logger
 - Issues: https://github.com/cshawky/CsTool.Logger/issues
+- Nuget: Currently available as a local nuget package
 
 ## Notes
 
@@ -555,3 +553,11 @@ To name a few:
 * but the root cause is not fully understood. At present only log messages in some destructors are not being logged
 * because those destructors are being executed after the log file has been closed and message queue remoed.
 * If there are critical messages to be captured they can be captured by the log of last resort anyway. Use SafeWrite().
+
+
+# License
+
+Licenced under Apache License Version 2.0, January 2004 http://www.apache.org/licenses/
+Other license models available on request.
+
+#

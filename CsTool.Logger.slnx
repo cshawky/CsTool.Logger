@@ -1,0 +1,30 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Source/" />
+  <Folder Name="/Source/Libraries/">
+    <Project Path="Source/Libraries/CsTool.Logger/CsTool.Logger.csproj" />
+    <Project Path="Source/Libraries/CsTool.LoggerSrc/CsTool.LoggerSrc.shproj" />
+  </Folder>
+  <Folder Name="/Source/Libraries/Net481/">
+    <Project Path="Source/Libraries/Net481/CsTool.Logger/CsTool.Logger.csproj" />
+  </Folder>
+  <Folder Name="/Source/Tests/">
+    <Project Path="Source/Tests/Test.Logger1/Test.Logger1.csproj" />
+    <Project Path="Source/Tests/Test.LoggerSrc/Test.LoggerSrc.shproj" />
+    <Project Path="Source/Tests/Test.LoggerWpfNet8/Test.LoggerWpfNet8.csproj" />
+    <Project Path="Source/Tests/Test.LoggerXml/Test.LoggerXml.csproj" />
+    <Project Path="Source/Tests/Test.LoggerXmlSrc/Test.LoggerXmlSrc.shproj" />
+  </Folder>
+  <Folder Name="/Source/Tests/Nuget/">
+    <Project Path="Source/Tests/Nuget/Test.LoggerWpfNet8/Test.LoggerWpfNet8.csproj" />
+  </Folder>
+  <Folder Name="/~Doc/">
+    <File Path="LICENSE" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+    <File Path="Source/Libraries/CsTool.Logger/README_NUGET.md" />
+  </Folder>
+</Solution>
