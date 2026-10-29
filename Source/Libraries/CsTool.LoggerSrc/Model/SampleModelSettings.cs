@@ -107,7 +107,7 @@
 
         public void Save()
         {
-            Logger.AppDefaultsDocument.SaveDocument(this, null, version);
+            Logger.SaveAppDefaults(this);
         }
 
         /// <summary>

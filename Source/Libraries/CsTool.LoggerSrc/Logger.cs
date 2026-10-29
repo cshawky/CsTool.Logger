@@ -257,7 +257,7 @@ namespace CsTool.Logger
             bool createIfMissing = true, bool updateIfNeeded = true)
             => Instance.LoadAppDefaults(classInstance, sectionName, version, fileName, createIfMissing, updateIfNeeded);
 
-        public bool SaveAppDefaults(object classInstance) => Instance.SaveAppDefaults(classInstance);
+        public static bool SaveAppDefaults(object classInstance) => Instance.SaveAppDefaults(classInstance);
 
         public bool SaveAppDefaults(object classInstance, string sectionName, string version)
             => Instance.SaveAppDefaults(classInstance, sectionName, version);
